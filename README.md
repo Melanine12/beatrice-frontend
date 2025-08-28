@@ -30,7 +30,7 @@ npm install
 
 ## 🔧 Configuration
 
-Le frontend est configuré pour se connecter au backend sur `http://localhost:5002`.
+Le frontend est configuré pour se connecter au backend sur `https://beatrice-backend.onrender.com`.
 
 ## 🚀 Démarrage
 
@@ -77,7 +77,7 @@ src/
 ## 🔗 API Integration
 
 Le frontend communique avec le backend via :
-- **Base URL** : `http://localhost:5002/api`
+- **Base URL** : `https://beatrice-backend.onrender.com/api`
 - **Proxy** : Configuré dans `package.json`
 - **Authentification** : JWT stocké dans le localStorage
 

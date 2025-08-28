@@ -25,7 +25,7 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(parsed.filter(n => !n.read).length);
     }
     // Socket.io subscription
-    const socket = io(process.env.REACT_APP_API_BASE?.replace('/api','') || 'http://localhost:5002');
+    const socket = io(process.env.REACT_APP_API_BASE?.replace('/api','') || 'https://beatrice-backend.onrender.com');
     socket.on('connect', () => {
       // console.log('Socket connected');
     });
