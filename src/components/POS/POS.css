@@ -1,0 +1,149 @@
+/* Styles personnalisés pour le système POS */
+
+.pos-product-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pos-product-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.pos-cart-item {
+  animation: slideIn 0.3s ease-out;
+}
+
+.pos-payment-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease;
+}
+
+.pos-payment-button:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.pos-calculator-button {
+  transition: all 0.2s ease;
+}
+
+.pos-calculator-button:active {
+  transform: scale(0.95);
+}
+
+.pos-modal-enter {
+  opacity: 0;
+  transform: scale(0.9) translateY(-20px);
+}
+
+.pos-modal-enter-active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: all 0.3s ease-out;
+}
+
+.pos-modal-exit {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.pos-modal-exit-active {
+  opacity: 0;
+  transform: scale(0.9) translateY(-20px);
+  transition: all 0.3s ease-in;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pos-stats-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.pos-stats-card:nth-child(1) { animation-delay: 0.1s; }
+.pos-stats-card:nth-child(2) { animation-delay: 0.2s; }
+.pos-stats-card:nth-child(3) { animation-delay: 0.3s; }
+.pos-stats-card:nth-child(4) { animation-delay: 0.4s; }
+.pos-stats-card:nth-child(5) { animation-delay: 0.5s; }
+.pos-stats-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Responsive design pour mobile */
+@media (max-width: 768px) {
+  .pos-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .pos-cart {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    border-radius: 20px 20px 0 0;
+    max-height: 60vh;
+  }
+}
+
+/* Mode sombre amélioré */
+.dark .pos-product-card {
+  border-color: #374151;
+}
+
+.dark .pos-product-card:hover {
+  border-color: #4B5563;
+  background-color: #1F2937;
+}
+
+/* Animations pour les notifications */
+.pos-notification {
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Styles pour l'impression */
+@media print {
+  .pos-no-print {
+    display: none !important;
+  }
+  
+  .pos-print-only {
+    display: block !important;
+  }
+}
