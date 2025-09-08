@@ -160,8 +160,8 @@ export const PERMISSION_LABELS = {
 export const hasPermission = (userRole, permission) => {
   if (!userRole || !permission) return false;
   
-  // Normaliser le rôle (enlever les espaces, convertir en minuscules)
-  const normalizedRole = userRole.toString().toLowerCase().trim();
+  // Normaliser le rôle (enlever les espaces, convertir en minuscules, remplacer espaces par underscores)
+  const normalizedRole = userRole.toString().toLowerCase().trim().replace(/\s+/g, '_');
   
   // Le patron a accès à tout
   if (normalizedRole === ROLES.PATRON) return true;
@@ -173,11 +173,13 @@ export const hasPermission = (userRole, permission) => {
   
   if (!matchingRole) {
     console.warn(`⚠️ Rôle non reconnu: "${userRole}" (normalisé: "${normalizedRole}")`);
+    console.warn(`Rôles disponibles:`, Object.values(ROLES));
     return false;
   }
   
   // Vérifier si le rôle a la permission
   const rolePermissions = ROLE_PERMISSIONS[matchingRole] || [];
+  console.log(`✅ Rôle trouvé: "${matchingRole}" avec permissions:`, rolePermissions);
   return rolePermissions.includes(permission);
 };
 
@@ -185,15 +187,15 @@ export const hasPermission = (userRole, permission) => {
 export const hasRole = (userRole, allowedRoles) => {
   if (!userRole || !allowedRoles) return false;
   
-  // Normaliser le rôle (enlever les espaces, convertir en minuscules)
-  const normalizedRole = userRole.toString().toLowerCase().trim();
+  // Normaliser le rôle (enlever les espaces, convertir en minuscules, remplacer espaces par underscores)
+  const normalizedRole = userRole.toString().toLowerCase().trim().replace(/\s+/g, '_');
   
   // Le patron a accès à tout
   if (normalizedRole === ROLES.PATRON) return true;
   
   // Normaliser les rôles autorisés
   const normalizedAllowedRoles = allowedRoles.map(role => 
-    role.toString().toLowerCase().trim()
+    role.toString().toLowerCase().trim().replace(/\s+/g, '_')
   );
   
   return normalizedAllowedRoles.includes(normalizedRole);
@@ -203,8 +205,8 @@ export const hasRole = (userRole, allowedRoles) => {
 export const getRolePermissions = (role) => {
   if (!role) return [];
   
-  // Normaliser le rôle
-  const normalizedRole = role.toString().toLowerCase().trim();
+  // Normaliser le rôle (enlever les espaces, convertir en minuscules, remplacer espaces par underscores)
+  const normalizedRole = role.toString().toLowerCase().trim().replace(/\s+/g, '_');
   
   // Trouver le rôle correspondant
   const matchingRole = Object.values(ROLES).find(r => 
@@ -213,10 +215,13 @@ export const getRolePermissions = (role) => {
   
   if (!matchingRole) {
     console.warn(`⚠️ Rôle non reconnu pour getRolePermissions: "${role}" (normalisé: "${normalizedRole}")`);
+    console.warn(`Rôles disponibles:`, Object.values(ROLES));
     return [];
   }
   
-  return ROLE_PERMISSIONS[matchingRole] || [];
+  const permissions = ROLE_PERMISSIONS[matchingRole] || [];
+  console.log(`✅ Permissions pour "${matchingRole}":`, permissions);
+  return permissions;
 };
 
 // Fonction pour obtenir le label d'un rôle
