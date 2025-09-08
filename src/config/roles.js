@@ -160,11 +160,24 @@ export const PERMISSION_LABELS = {
 export const hasPermission = (userRole, permission) => {
   if (!userRole || !permission) return false;
   
+  // Normaliser le rôle (enlever les espaces, convertir en minuscules)
+  const normalizedRole = userRole.toString().toLowerCase().trim();
+  
   // Le patron a accès à tout
-  if (userRole === ROLES.PATRON) return true;
+  if (normalizedRole === ROLES.PATRON) return true;
+  
+  // Trouver le rôle correspondant (insensible à la casse)
+  const matchingRole = Object.values(ROLES).find(role => 
+    role.toLowerCase() === normalizedRole
+  );
+  
+  if (!matchingRole) {
+    console.warn(`⚠️ Rôle non reconnu: "${userRole}" (normalisé: "${normalizedRole}")`);
+    return false;
+  }
   
   // Vérifier si le rôle a la permission
-  const rolePermissions = ROLE_PERMISSIONS[userRole] || [];
+  const rolePermissions = ROLE_PERMISSIONS[matchingRole] || [];
   return rolePermissions.includes(permission);
 };
 
@@ -172,15 +185,38 @@ export const hasPermission = (userRole, permission) => {
 export const hasRole = (userRole, allowedRoles) => {
   if (!userRole || !allowedRoles) return false;
   
-  // Le patron a accès à tout
-  if (userRole === ROLES.PATRON) return true;
+  // Normaliser le rôle (enlever les espaces, convertir en minuscules)
+  const normalizedRole = userRole.toString().toLowerCase().trim();
   
-  return allowedRoles.includes(userRole);
+  // Le patron a accès à tout
+  if (normalizedRole === ROLES.PATRON) return true;
+  
+  // Normaliser les rôles autorisés
+  const normalizedAllowedRoles = allowedRoles.map(role => 
+    role.toString().toLowerCase().trim()
+  );
+  
+  return normalizedAllowedRoles.includes(normalizedRole);
 };
 
 // Fonction pour obtenir toutes les permissions d'un rôle
 export const getRolePermissions = (role) => {
-  return ROLE_PERMISSIONS[role] || [];
+  if (!role) return [];
+  
+  // Normaliser le rôle
+  const normalizedRole = role.toString().toLowerCase().trim();
+  
+  // Trouver le rôle correspondant
+  const matchingRole = Object.values(ROLES).find(r => 
+    r.toLowerCase() === normalizedRole
+  );
+  
+  if (!matchingRole) {
+    console.warn(`⚠️ Rôle non reconnu pour getRolePermissions: "${role}" (normalisé: "${normalizedRole}")`);
+    return [];
+  }
+  
+  return ROLE_PERMISSIONS[matchingRole] || [];
 };
 
 // Fonction pour obtenir le label d'un rôle

@@ -24,8 +24,19 @@ export const PermissionProvider = ({ children }) => {
   const { user } = useAuth();
   
   const userRole = user?.role || user?.userRole;
+  
+  // Debug: Log user role and permissions
+  console.log('🔍 PermissionContext Debug:', {
+    user,
+    userRole,
+    isAgent: userRole === ROLES.AGENT,
+    agentRole: ROLES.AGENT
+  });
+  
   const userPermissions = useMemo(() => {
-    return getRolePermissions(userRole);
+    const permissions = getRolePermissions(userRole);
+    console.log('🔍 User permissions:', permissions);
+    return permissions;
   }, [userRole]);
 
   const checkPermission = (permission) => {

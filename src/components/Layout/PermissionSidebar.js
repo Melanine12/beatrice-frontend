@@ -27,13 +27,20 @@ const PermissionSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       return guichetierNavigation.filter(item => checkPermission(item.permission));
     }
     
-    return navigationConfig.filter(item => {
+    const filtered = navigationConfig.filter(item => {
       if (item.submenu) {
         // Si l'item a un sous-menu, vérifier si au moins un sous-item est accessible
-        return checkAnyPermission(item.submenu.map(sub => sub.permission));
+        const hasAccess = checkAnyPermission(item.submenu.map(sub => sub.permission));
+        console.log(`🔍 Menu "${item.name}" (submenu):`, hasAccess);
+        return hasAccess;
       }
-      return checkPermission(item.permission);
+      const hasAccess = checkPermission(item.permission);
+      console.log(`🔍 Menu "${item.name}":`, hasAccess, 'permission:', item.permission);
+      return hasAccess;
     });
+    
+    console.log('🔍 Filtered navigation:', filtered.map(item => item.name));
+    return filtered;
   };
 
   const NavigationItem = ({ item }) => {
