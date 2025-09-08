@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { PermissionProvider } from './contexts/PermissionContext';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -36,6 +37,7 @@ import DemandesFonds from './pages/DemandesFonds';
 import FichesExecution from './pages/FichesExecution';
 import CycleVieArticles from './pages/CycleVieArticles';
 import Buanderie from './pages/Buanderie';
+import Unauthorized from './pages/Unauthorized';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +58,8 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <NotificationProvider>
+        <PermissionProvider>
+          <NotificationProvider>
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -94,6 +97,7 @@ function App() {
                 <Route path="cycle-vie-articles" element={<CycleVieArticles />} />
                 <Route path="buanderie" element={<Buanderie />} />
               </Route>
+              <Route path="/unauthorized" element={<Unauthorized />} />
             </Routes>
             <ToastContainer
               position="top-right"
@@ -107,7 +111,8 @@ function App() {
               pauseOnHover
             />
           </div>
-        </NotificationProvider>
+          </NotificationProvider>
+        </PermissionProvider>
       </AuthProvider>
     </ThemeProvider>
   );

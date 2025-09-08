@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import { SOCKET_URL } from '../config/api';
 
 const NotificationContext = createContext();
 
@@ -25,7 +26,7 @@ export const NotificationProvider = ({ children }) => {
       setUnreadCount(parsed.filter(n => !n.read).length);
     }
     // Socket.io subscription
-    const socket = io(process.env.REACT_APP_API_BASE?.replace('/api','') || 'https://beatrice-backend.onrender.com');
+    const socket = io(process.env.REACT_APP_API_BASE?.replace('/api','') || SOCKET_URL);
     socket.on('connect', () => {
       // console.log('Socket connected');
     });

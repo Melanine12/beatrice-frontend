@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { API_BASE_URL, API_TIMEOUT } from '../config/api';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://beatrice-backend.onrender.com/api',
-  timeout: 10000,
+  baseURL: process.env.REACT_APP_API_URL || API_BASE_URL,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },

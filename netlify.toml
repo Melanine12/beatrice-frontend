@@ -1,6 +1,6 @@
 [build]
   publish = "build"
-  command = "npm install && npm run build"
+  command = "rm -rf node_modules package-lock.json && npm install && npm run build"
 
 [[redirects]]
   from = "/*"
@@ -10,7 +10,7 @@
 [build.environment]
   NODE_VERSION = "20"
   CI = "false"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_FLAGS = "--legacy-peer-deps --force"
 
 [build.processing]
   skip_processing = false
