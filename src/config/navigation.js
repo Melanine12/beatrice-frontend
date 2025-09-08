@@ -82,12 +82,12 @@ export const navigationConfig = [
     submenu: [
       {
         name: 'Stock',
-        href: '/inventory',
+        href: '/inventory/stock',
         permission: PERMISSIONS.INVENTAIRE
       },
       {
         name: 'Bons de prélèvement',
-        href: '/inventory?tab=bons',
+        href: '/inventory/bons-prelevement',
         permission: PERMISSIONS.BONS_PRELEVEMENT
       },
       {

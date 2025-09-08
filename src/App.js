@@ -38,6 +38,8 @@ import FichesExecution from './pages/FichesExecution';
 import CycleVieArticles from './pages/CycleVieArticles';
 import Buanderie from './pages/Buanderie';
 import Unauthorized from './pages/Unauthorized';
+import Stock from './pages/Stock';
+import BonsPrelevement from './pages/BonsPrelevement';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +98,8 @@ function App() {
                 <Route path="fiches-execution" element={<FichesExecution />} />
                 <Route path="cycle-vie-articles" element={<CycleVieArticles />} />
                 <Route path="buanderie" element={<Buanderie />} />
+                <Route path="inventory/stock" element={<Stock />} />
+                <Route path="inventory/bons-prelevement" element={<BonsPrelevement />} />
               </Route>
               <Route path="/unauthorized" element={<Unauthorized />} />
             </Routes>
