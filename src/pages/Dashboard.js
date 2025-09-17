@@ -17,7 +17,7 @@ import {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { startRealTimeSimulation, stopSimulation, isSimulationActive, addNotification } = useNotifications();
+  const { addNotification } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const [stats, setStats] = useState(null);
@@ -110,9 +110,6 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchDashboardStats();
-      // Démarrer la simulation de notifications en temps réel
-      const cleanup = startRealTimeSimulation();
-      return cleanup;
     }
   }, [user, fetchDashboardStats]);
 
@@ -314,18 +311,13 @@ const Dashboard = () => {
                 Test notification
               </span>
             </button>
-            <button 
+            <button
               onClick={() => navigate('/notifications')}
               className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 dark:border-gray-600 dark:hover:border-green-400 dark:hover:bg-gray-700 transition-colors duration-200"
             >
-              <div className="relative">
-                <BellIcon className="h-8 w-8 text-gray-400" />
-                {isSimulationActive && (
-                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-                )}
-              </div>
+              <BellIcon className="h-8 w-8 text-gray-400" />
               <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                {isSimulationActive ? 'Simulation active' : 'Notifications'}
+                Notifications
               </span>
             </button>
           </div>

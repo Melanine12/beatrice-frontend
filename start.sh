@@ -71,7 +71,7 @@ start_dev() {
     
     # Vérifier que le backend est accessible
     info "Vérification de la connectivité avec le backend..."
-    if curl -s "https://beatrice-backend.onrender.com/api/health" > /dev/null 2>&1; then
+    if curl -s "http://localhost:5002/api/health" > /dev/null 2>&1; then
         log "✅ Backend accessible sur le port 5002"
     else
         warn "⚠️  Backend non accessible sur le port 5002"

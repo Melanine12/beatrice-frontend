@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -19,6 +20,7 @@ import {
 
 const Departements = () => {
   const { user, hasPermission } = useAuth();
+  const { addNotification } = useNotifications();
   const [departements, setDepartements] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,9 +88,25 @@ const Departements = () => {
       if (editingDepartement) {
         await api.put(`/departements/${editingDepartement.id}`, formData);
         toast.success('Département mis à jour avec succès');
+        
+        // Notification pour la modification
+        addNotification({
+          title: 'Département modifié',
+          message: `Le département "${formData.nom}" a été modifié par ${user?.prenom} ${user?.nom}`,
+          type: 'info',
+          link: '/departements'
+        });
       } else {
         await api.post('/departements', formData);
         toast.success('Département créé avec succès');
+        
+        // Notification pour la création
+        addNotification({
+          title: 'Nouveau département créé',
+          message: `Un nouveau département "${formData.nom}" a été créé par ${user?.prenom} ${user?.nom}`,
+          type: 'success',
+          link: '/departements'
+        });
       }
       setShowModal(false);
       setEditingDepartement(null);
@@ -97,6 +115,14 @@ const Departements = () => {
       console.error('Error saving departement:', error);
       const message = error.response?.data?.message || 'Erreur lors de la sauvegarde';
       toast.error(message);
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur département',
+        message: `Erreur lors de la sauvegarde du département: ${message}`,
+        type: 'error',
+        link: '/departements'
+      });
     }
   };
 
@@ -106,12 +132,32 @@ const Departements = () => {
     }
 
     try {
+      // Récupérer les informations du département avant suppression pour la notification
+      const departementToDelete = departements.find(dept => dept.id === id);
+      
       await api.delete(`/departements/${id}`);
       toast.success('Département supprimé avec succès');
+      
+      // Notification pour la suppression
+      addNotification({
+        title: 'Département supprimé',
+        message: `Le département "${departementToDelete?.nom || 'inconnu'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+        type: 'warning',
+        link: '/departements'
+      });
+      
       fetchDepartements();
     } catch (error) {
       console.error('Error deleting departement:', error);
       toast.error('Erreur lors de la suppression');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression département',
+        message: `Erreur lors de la suppression du département: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/departements'
+      });
     }
   };
 

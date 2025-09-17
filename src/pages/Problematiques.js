@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -24,6 +25,7 @@ import Select from 'react-select';
 
 const Problematiques = () => {
   const { user, hasPermission } = useAuth();
+  const { addNotification } = useNotifications();
   const [problematiques, setProblematiques] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -288,11 +290,27 @@ const Problematiques = () => {
           });
         }
         
+        // Notification pour la modification
+        addNotification({
+          title: 'Problématique modifiée',
+          message: `La problématique "${formData.titre}" a été modifiée par ${user?.prenom} ${user?.nom}`,
+          type: 'info',
+          link: '/problematiques'
+        });
+        
         console.log('✅ Problématique mise à jour avec succès');
         console.log('📊 Données envoyées:', updateData);
       } else {
         await api.post('/problematiques', submitData);
         toast.success('Problématique créée avec succès');
+        
+        // Notification pour la création
+        addNotification({
+          title: 'Nouvelle problématique créée',
+          message: `Une nouvelle problématique "${formData.titre}" a été créée par ${user?.prenom} ${user?.nom}`,
+          type: 'success',
+          link: '/problematiques'
+        });
       }
 
       setShowModal(false);
@@ -303,6 +321,14 @@ const Problematiques = () => {
     } catch (error) {
       console.error('Error saving issue:', error);
       toast.error('Erreur lors de la sauvegarde');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur problématique',
+        message: `Erreur lors de la sauvegarde de la problématique: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/problematiques'
+      });
     }
   };
 
@@ -312,19 +338,50 @@ const Problematiques = () => {
     }
 
     try {
+      // Récupérer les informations de la problématique avant suppression pour la notification
+      const problemeToDelete = problematiques.find(p => p.id === id);
+      
       await api.delete(`/problematiques/${id}`);
       toast.success('Problématique supprimée avec succès');
+      
+      // Notification pour la suppression
+      addNotification({
+        title: 'Problématique supprimée',
+        message: `La problématique "${problemeToDelete?.titre || 'inconnue'}" a été supprimée par ${user?.prenom} ${user?.nom}`,
+        type: 'warning',
+        link: '/problematiques'
+      });
+      
       fetchIssues();
     } catch (error) {
       console.error('Error deleting issue:', error);
       toast.error('Erreur lors de la suppression');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression problématique',
+        message: `Erreur lors de la suppression de la problématique: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/problematiques'
+      });
     }
   };
 
   const handleStatusChange = async (id, newStatus, oldStatus) => {
     try {
+      // Récupérer les informations de la problématique pour la notification
+      const probleme = problematiques.find(p => p.id === id);
+      
       await api.put(`/problematiques/${id}`, { statut: newStatus });
       toast.success('Statut mis à jour avec succès');
+      
+      // Notification pour le changement de statut
+      addNotification({
+        title: 'Statut de problématique modifié',
+        message: `Le statut de la problématique "${probleme?.titre || 'inconnue'}" a été changé de "${oldStatus}" à "${newStatus}" par ${user?.prenom} ${user?.nom}`,
+        type: 'info',
+        link: '/problematiques'
+      });
       
       // Informer de la création automatique de tâche si le statut passe à "En cours"
       if (newStatus === 'En cours' && oldStatus !== 'En cours') {
@@ -332,12 +389,28 @@ const Problematiques = () => {
           duration: 5000,
           icon: '🎯'
         });
+        
+        // Notification spéciale pour la création de tâche
+        addNotification({
+          title: 'Tâche créée automatiquement',
+          message: `Une nouvelle tâche a été créée automatiquement pour la problématique "${probleme?.titre || 'inconnue'}"`,
+          type: 'success',
+          link: '/problematiques'
+        });
       }
       
       fetchIssues();
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Erreur lors de la mise à jour du statut');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur changement de statut',
+        message: `Erreur lors du changement de statut de la problématique: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/problematiques'
+      });
     }
   };
 

@@ -80,9 +80,14 @@ export const AuthProvider = ({ children }) => {
     const roleHierarchy = {
       'Guichetier': 1,
       'Agent': 2,
-      'Superviseur': 3,
-      'Administrateur': 4,
-      'Patron': 5
+      'Web Master': 3,
+      'Superviseur Stock': 4,
+      'Superviseur Housing': 5,
+      'Superviseur Finance': 6,
+      'Superviseur RH': 7,
+      'Superviseur': 8,
+      'Administrateur': 9,
+      'Patron': 10
     };
     
     return roleHierarchy[user.role] >= roleHierarchy[requiredRole];

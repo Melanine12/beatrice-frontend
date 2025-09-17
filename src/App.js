@@ -36,6 +36,42 @@ import DemandesFonds from './pages/DemandesFonds';
 import FichesExecution from './pages/FichesExecution';
 import CycleVieArticles from './pages/CycleVieArticles';
 import Buanderie from './pages/Buanderie';
+import BonsMenage from './pages/BonsMenage';
+
+// Import RH pages
+import {
+  DossierPersonnel,
+  Organigramme,
+  CongesAbsences,
+  Evaluations,
+  ContratsDocuments,
+  HistoriqueRH,
+  OffresEmploi,
+  Candidatures,
+  ProcessusRecrutement,
+  Integration,
+  Pointage,
+  Planning,
+  HeuresSupplementaires,
+  BulletinsPaie,
+  AvantagesSociaux,
+  Remboursements,
+  Variables,
+  Objectifs,
+  Formations,
+  Competences,
+  Annonces,
+  Sondages,
+  Evenements,
+  PolitiquesRH,
+  GestionEmployes,
+  RecrutementIntegration,
+  TempsPresences,
+  PaieAvantages,
+  PerformanceFormation,
+  CommunicationRH,
+  RHDashboard
+} from './pages/RH';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -93,6 +129,42 @@ function App() {
                 <Route path="fiches-execution" element={<FichesExecution />} />
                 <Route path="cycle-vie-articles" element={<CycleVieArticles />} />
                 <Route path="buanderie" element={<Buanderie />} />
+                <Route path="bons-menage" element={<BonsMenage />} />
+                
+                {/* RH Routes - Main sections */}
+                <Route path="rh" element={<RHDashboard />} />
+                <Route path="rh/gestion-employes" element={<GestionEmployes />} />
+                <Route path="rh/recrutement-integration" element={<RecrutementIntegration />} />
+                <Route path="rh/temps-presences" element={<TempsPresences />} />
+                <Route path="rh/paie-avantages" element={<PaieAvantages />} />
+                <Route path="rh/performance-formation" element={<PerformanceFormation />} />
+                <Route path="rh/communication-rh" element={<CommunicationRH />} />
+                
+                {/* RH Routes - Individual pages (for direct access) */}
+                <Route path="rh/dossier-personnel" element={<DossierPersonnel />} />
+                <Route path="rh/organigramme" element={<Organigramme />} />
+                <Route path="rh/contrats-documents" element={<ContratsDocuments />} />
+                <Route path="rh/historique" element={<HistoriqueRH />} />
+                <Route path="rh/offres-emploi" element={<OffresEmploi />} />
+                <Route path="rh/candidatures" element={<Candidatures />} />
+                <Route path="rh/processus-recrutement" element={<ProcessusRecrutement />} />
+                <Route path="rh/integration" element={<Integration />} />
+                <Route path="rh/pointage" element={<Pointage />} />
+                <Route path="rh/conges-absences" element={<CongesAbsences />} />
+                <Route path="rh/planning" element={<Planning />} />
+                <Route path="rh/heures-supplementaires" element={<HeuresSupplementaires />} />
+                <Route path="rh/bulletins-paie" element={<BulletinsPaie />} />
+                <Route path="rh/avantages-sociaux" element={<AvantagesSociaux />} />
+                <Route path="rh/remboursements" element={<Remboursements />} />
+                <Route path="rh/variables" element={<Variables />} />
+                <Route path="rh/evaluations" element={<Evaluations />} />
+                <Route path="rh/objectifs" element={<Objectifs />} />
+                <Route path="rh/formations" element={<Formations />} />
+                <Route path="rh/competences" element={<Competences />} />
+                <Route path="rh/annonces" element={<Annonces />} />
+                <Route path="rh/sondages" element={<Sondages />} />
+                <Route path="rh/evenements" element={<Evenements />} />
+                <Route path="rh/politiques" element={<PolitiquesRH />} />
               </Route>
             </Routes>
             <ToastContainer

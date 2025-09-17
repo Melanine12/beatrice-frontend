@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -20,6 +21,7 @@ import jsPDF from 'jspdf';
 
 const FichesExecution = () => {
   const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [fiches, setFiches] = useState([]);
   const [filters, setFilters] = useState({
@@ -221,10 +223,26 @@ const FichesExecution = () => {
         // Mise à jour
         await api.put(`/fiches-execution/${selectedFiche.id}`, form);
         toast.success('Fiche d\'exécution mise à jour avec succès');
+        
+        // Notification pour la modification de fiche
+        addNotification({
+          title: 'Fiche d\'exécution modifiée',
+          message: `La fiche d'exécution "${form.titre}" a été modifiée par ${user?.prenom} ${user?.nom}`,
+          type: 'info',
+          link: '/fiches-execution'
+        });
       } else {
         // Création
         await api.post('/fiches-execution', form);
         toast.success('Fiche d\'exécution créée avec succès');
+        
+        // Notification pour la création de fiche
+        addNotification({
+          title: 'Nouvelle fiche d\'exécution',
+          message: `Une nouvelle fiche d'exécution "${form.titre}" a été créée par ${user?.prenom} ${user?.nom}`,
+          type: 'success',
+          link: '/fiches-execution'
+        });
       }
       
       closeModal();
@@ -233,6 +251,14 @@ const FichesExecution = () => {
       console.error('Erreur lors de la sauvegarde:', err);
       const msg = err.response?.data?.message || 'Erreur lors de la sauvegarde';
       toast.error(msg);
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur fiche d\'exécution',
+        message: `Erreur lors de la sauvegarde de la fiche d'exécution: ${msg}`,
+        type: 'error',
+        link: '/fiches-execution'
+      });
     } finally {
       setSaving(false);
     }
@@ -265,18 +291,42 @@ const FichesExecution = () => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette fiche d\'exécution ?')) return;
     
     try {
+      // Récupérer les informations de la fiche avant suppression pour la notification
+      const ficheToDelete = fiches.find(f => f.id === id);
+      
       await api.delete(`/fiches-execution/${id}`);
       toast.success('Fiche d\'exécution supprimée avec succès');
+      
+      // Notification pour la suppression de fiche
+      addNotification({
+        title: 'Fiche d\'exécution supprimée',
+        message: `La fiche d'exécution "${ficheToDelete?.titre || 'inconnue'}" a été supprimée par ${user?.prenom} ${user?.nom}`,
+        type: 'warning',
+        link: '/fiches-execution'
+      });
+      
       fetchFiches();
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
       const msg = err.response?.data?.message || 'Erreur lors de la suppression';
       toast.error(msg);
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression fiche',
+        message: `Erreur lors de la suppression de la fiche d'exécution: ${msg}`,
+        type: 'error',
+        link: '/fiches-execution'
+      });
     }
   };
 
   const changeStatus = async (id, newStatus) => {
     try {
+      // Récupérer les informations de la fiche avant changement de statut pour la notification
+      const fiche = fiches.find(f => f.id === id);
+      const oldStatus = fiche?.statut;
+      
       const updateData = { statut: newStatus };
       
       if (newStatus === 'en_cours') {
@@ -292,10 +342,27 @@ const FichesExecution = () => {
                          newStatus === 'annulee' ? 'annulée' : newStatus;
       
       toast.success(`Fiche d'exécution ${statusLabel} avec succès`);
+      
+      // Notification pour le changement de statut
+      addNotification({
+        title: 'Statut de fiche modifié',
+        message: `Le statut de la fiche d'exécution "${fiche?.titre || 'inconnue'}" a été changé de "${getStatusLabel(oldStatus)}" à "${getStatusLabel(newStatus)}" par ${user?.prenom} ${user?.nom}`,
+        type: 'info',
+        link: '/fiches-execution'
+      });
+      
       fetchFiches();
     } catch (err) {
       console.error('Erreur lors du changement de statut:', err);
       toast.error("Erreur lors du changement de statut");
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur changement de statut',
+        message: `Erreur lors du changement de statut de la fiche d'exécution: ${err.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/fiches-execution'
+      });
     }
   };
 
@@ -524,10 +591,26 @@ const FichesExecution = () => {
       
       console.log('✅ Export PDF réussi !');
       toast.success('Export PDF réussi !');
+      
+      // Notification pour l'export PDF réussi
+      addNotification({
+        title: 'Rapport PDF généré',
+        message: `Rapport des fiches d'exécution généré avec succès (${fichesToExport.length} fiches) par ${user?.prenom} ${user?.nom}`,
+        type: 'success',
+        link: '/fiches-execution'
+      });
     } catch (error) {
       console.error('❌ Erreur lors de l\'export PDF:', error);
       console.error('Détails de l\'erreur:', error.stack);
       toast.error('Erreur lors de l\'export PDF');
+      
+      // Notification d'erreur pour l'export PDF
+      addNotification({
+        title: 'Erreur génération PDF',
+        message: `Erreur lors de la génération du rapport PDF des fiches d'exécution: ${error.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/fiches-execution'
+      });
     }
   };
 

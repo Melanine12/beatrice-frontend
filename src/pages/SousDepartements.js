@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -21,6 +22,7 @@ import {
 
 const SousDepartements = () => {
   const { user, hasPermission } = useAuth();
+  const { addNotification } = useNotifications();
   const [sousDepartements, setSousDepartements] = useState([]);
   const [departements, setDepartements] = useState([]);
   const [users, setUsers] = useState([]);
@@ -96,9 +98,25 @@ const SousDepartements = () => {
       if (editingSousDepartement) {
         await api.put(`/sous-departements/${editingSousDepartement.id}`, formData);
         toast.success('Sous-département mis à jour avec succès');
+        
+        // Notification pour la modification
+        addNotification({
+          title: 'Sous-département modifié',
+          message: `Le sous-département "${formData.nom}" a été modifié par ${user?.prenom} ${user?.nom}`,
+          type: 'info',
+          link: '/sous-departements'
+        });
       } else {
         await api.post('/sous-departements', formData);
         toast.success('Sous-département créé avec succès');
+        
+        // Notification pour la création
+        addNotification({
+          title: 'Nouveau sous-département créé',
+          message: `Un nouveau sous-département "${formData.nom}" a été créé par ${user?.prenom} ${user?.nom}`,
+          type: 'success',
+          link: '/sous-departements'
+        });
       }
       
       setShowModal(false);
@@ -108,6 +126,14 @@ const SousDepartements = () => {
       console.error('Error saving sous-departement:', error);
       const message = error.response?.data?.message || 'Erreur lors de la sauvegarde';
       toast.error(message);
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur sous-département',
+        message: `Erreur lors de la sauvegarde du sous-département: ${message}`,
+        type: 'error',
+        link: '/sous-departements'
+      });
     }
   };
 
@@ -117,13 +143,33 @@ const SousDepartements = () => {
     }
 
     try {
+      // Récupérer les informations du sous-département avant suppression pour la notification
+      const sousDepartementToDelete = sousDepartements.find(sd => sd.id === id);
+      
       await api.delete(`/sous-departements/${id}`);
       toast.success('Sous-département supprimé avec succès');
+      
+      // Notification pour la suppression
+      addNotification({
+        title: 'Sous-département supprimé',
+        message: `Le sous-département "${sousDepartementToDelete?.nom || 'inconnu'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+        type: 'warning',
+        link: '/sous-departements'
+      });
+      
       fetchSousDepartements();
     } catch (error) {
       console.error('Error deleting sous-departement:', error);
       const message = error.response?.data?.message || 'Erreur lors de la suppression';
       toast.error(message);
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression sous-département',
+        message: `Erreur lors de la suppression du sous-département: ${message}`,
+        type: 'error',
+        link: '/sous-departements'
+      });
     }
   };
 

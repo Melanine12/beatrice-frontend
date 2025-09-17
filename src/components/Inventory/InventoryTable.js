@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import QRCode from 'qrcode';
+import ArticleDetailsModal from './ArticleDetailsModal';
 
 const InventoryTable = ({ inventory, onEdit, onDelete, getCategoryColor, getStockStatusColor }) => {
   const { hasPermission } = useAuth();
   const [qrCodeImages, setQrCodeImages] = useState({});
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   // Générer les images QR code pour tous les articles
   useEffect(() => {
@@ -33,6 +36,16 @@ const InventoryTable = ({ inventory, onEdit, onDelete, getCategoryColor, getStoc
 
     generateQRCodeImages();
   }, [inventory]);
+
+  const handleViewDetails = (article) => {
+    setSelectedArticle(article);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedArticle(null);
+  };
 
   if (inventory.length === 0) {
     return (
@@ -170,10 +183,20 @@ const InventoryTable = ({ inventory, onEdit, onDelete, getCategoryColor, getStoc
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div className="flex space-x-2">
+                  {/* Bouton Détails - Visible pour tous */}
+                  <button
+                    onClick={() => handleViewDetails(item)}
+                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    title="Voir les détails"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                  </button>
+                  
                   {hasPermission('Superviseur') && (
                     <button
                       onClick={() => onEdit(item)}
                       className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
+                      title="Modifier"
                     >
                       <PencilIcon className="w-4 h-4" />
                     </button>
@@ -182,6 +205,7 @@ const InventoryTable = ({ inventory, onEdit, onDelete, getCategoryColor, getStoc
                     <button
                       onClick={() => onDelete(item.id)}
                       className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                      title="Supprimer"
                     >
                       <TrashIcon className="w-4 h-4" />
                     </button>
@@ -192,6 +216,13 @@ const InventoryTable = ({ inventory, onEdit, onDelete, getCategoryColor, getStoc
           ))}
         </tbody>
       </table>
+      
+      {/* Modal de détails */}
+      <ArticleDetailsModal
+        article={selectedArticle}
+        isOpen={isDetailsModalOpen}
+        onClose={closeDetailsModal}
+      />
     </div>
   );
 };

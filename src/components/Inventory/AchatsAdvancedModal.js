@@ -83,7 +83,8 @@ const AchatsAdvancedModal = ({
         prix_unitaire: '',
         prix_auto: false,
         fournisseur_id: '',
-        description: ''
+        description: '',
+        grammage: ''
       }]
     }));
   };
@@ -349,7 +350,7 @@ const AchatsAdvancedModal = ({
                       </button>
                     </div>
                     
-                                         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                                              <div>
                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                            Produit
@@ -447,6 +448,20 @@ const AchatsAdvancedModal = ({
                           isClearable
                           isSearchable
                           styles={selectStyles}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Grammage (g)
+                        </label>
+                        <input
+                          type="number"
+                          value={ligne.grammage}
+                          onChange={(e) => updateLigneAchat(index, 'grammage', e.target.value)}
+                          min="0"
+                          step="0.1"
+                          className="input text-sm"
+                          placeholder="0.0"
                         />
                       </div>
                       <div>

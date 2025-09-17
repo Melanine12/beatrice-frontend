@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -12,11 +13,15 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
-  CubeIcon
+  CubeIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
+import BonsMenage from './BonsMenage';
 
 const Spaces = () => {
   const { user, hasPermission } = useAuth();
+  const { addNotification } = useNotifications();
+  const [activeTab, setActiveTab] = useState('spaces');
   const [spaces, setSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -42,8 +47,10 @@ const Spaces = () => {
   const spaceStatuses = ['Libre', 'Occupé', 'En nettoyage', 'En maintenance', 'Réservé', 'Fermé'];
 
   useEffect(() => {
-    fetchSpaces();
-  }, [filters, pagination.page, pagination.limit]);
+    if (activeTab === 'spaces') {
+      fetchSpaces();
+    }
+  }, [filters, pagination.page, pagination.limit, activeTab]);
 
   const fetchSpaces = async () => {
     try {
@@ -85,9 +92,25 @@ const Spaces = () => {
       if (editingSpace) {
         await api.put(`/chambres/${editingSpace.id}`, formData);
         toast.success('Espace mis à jour avec succès');
+        
+        // Notification pour la modification
+        addNotification({
+          title: 'Espace modifié',
+          message: `L'espace ${formData.numero} (${formData.type}) a été modifié par ${user?.prenom} ${user?.nom}`,
+          type: 'info',
+          link: '/spaces'
+        });
       } else {
         await api.post('/chambres', formData);
         toast.success('Espace créé avec succès');
+        
+        // Notification pour la création
+        addNotification({
+          title: 'Nouvel espace créé',
+          message: `Un nouvel espace ${formData.numero} (${formData.type}) a été créé par ${user?.prenom} ${user?.nom}`,
+          type: 'success',
+          link: '/spaces'
+        });
       }
       setShowModal(false);
       setEditingSpace(null);
@@ -97,6 +120,14 @@ const Spaces = () => {
       console.error('Error response:', error.response?.data);
       const message = error.response?.data?.message || 'Erreur lors de la sauvegarde';
       toast.error(message);
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur espace',
+        message: `Erreur lors de la sauvegarde de l'espace: ${message}`,
+        type: 'error',
+        link: '/spaces'
+      });
     }
   };
 
@@ -106,12 +137,32 @@ const Spaces = () => {
     }
 
     try {
+      // Récupérer les informations de l'espace avant suppression pour la notification
+      const spaceToDelete = spaces.find(space => space.id === id);
+      
       await api.delete(`/chambres/${id}`);
       toast.success('Espace supprimé avec succès');
+      
+      // Notification pour la suppression
+      addNotification({
+        title: 'Espace supprimé',
+        message: `L'espace ${spaceToDelete?.numero || 'inconnu'} (${spaceToDelete?.type || 'type inconnu'}) a été supprimé par ${user?.prenom} ${user?.nom}`,
+        type: 'warning',
+        link: '/spaces'
+      });
+      
       fetchSpaces();
     } catch (error) {
       console.error('Error deleting space:', error);
       toast.error('Erreur lors de la suppression');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression espace',
+        message: `Erreur lors de la suppression de l'espace: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/spaces'
+      });
     }
   };
 
@@ -126,6 +177,14 @@ const Spaces = () => {
     } catch (error) {
       console.error('Error fetching space articles:', error);
       toast.error('Erreur lors du chargement des articles');
+      
+      // Notification d'erreur pour le chargement des articles
+      addNotification({
+        title: 'Erreur chargement articles',
+        message: `Erreur lors du chargement des articles de l'espace ${space.numero}: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/spaces'
+      });
     } finally {
       setArticlesLoading(false);
     }
@@ -222,14 +281,13 @@ const Spaces = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Gestion des Espaces
+            Espaces & Locaux
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Gérez les espaces et leur disponibilité
           </p>
         </div>
-        {/* Temporarily allow all users to add spaces for testing */}
-        {/* {hasPermission('Superviseur') && ( */}
+        {activeTab === 'spaces' && (
           <button
             onClick={() => setShowModal(true)}
             className="btn-primary"
@@ -237,84 +295,115 @@ const Spaces = () => {
             <PlusIcon className="w-5 h-5 mr-2" />
             Ajouter un espace
           </button>
-        {/* )} */}
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="card">
-        <div className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Recherche
-              </label>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Numéro d'espace..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange({ ...filters, search: e.target.value })}
-                  className="input pl-10"
-                />
+      {/* Tabs */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('spaces')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'spaces'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            }`}
+          >
+            <BuildingOfficeIcon className="w-5 h-5 inline mr-2" />
+            Espaces
+          </button>
+          <button
+            onClick={() => setActiveTab('bons-menage')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'bons-menage'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+            }`}
+          >
+            <ClipboardDocumentListIcon className="w-5 h-5 inline mr-2" />
+            Bons de ménage
+          </button>
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'spaces' ? (
+        <>
+          {/* Filters */}
+          <div className="card">
+            <div className="card-body">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Recherche
+                  </label>
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Numéro d'espace..."
+                      value={filters.search}
+                      onChange={(e) => handleFilterChange({ ...filters, search: e.target.value })}
+                      className="input pl-10"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Statut
+                  </label>
+                  <select
+                    value={filters.statut}
+                    onChange={(e) => handleFilterChange({ ...filters, statut: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Tous les statuts</option>
+                    {spaceStatuses.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type
+                  </label>
+                  <select
+                    value={filters.type}
+                    onChange={(e) => handleFilterChange({ ...filters, type: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Tous les types</option>
+                    {spaceTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Étage
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Étage..."
+                    value={filters.etage}
+                    onChange={(e) => handleFilterChange({ ...filters, etage: e.target.value })}
+                    className="input"
+                    min="0"
+                    max="50"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => handleFilterChange({ statut: '', type: '', etage: '', search: '' })}
+                    className="btn-outline w-full"
+                  >
+                    <FunnelIcon className="w-4 h-4 mr-2" />
+                    Réinitialiser
+                  </button>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Statut
-              </label>
-              <select
-                value={filters.statut}
-                onChange={(e) => handleFilterChange({ ...filters, statut: e.target.value })}
-                className="input"
-              >
-                <option value="">Tous les statuts</option>
-                {spaceStatuses.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Type
-              </label>
-              <select
-                value={filters.type}
-                onChange={(e) => handleFilterChange({ ...filters, type: e.target.value })}
-                className="input"
-              >
-                <option value="">Tous les types</option>
-                {spaceTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Étage
-              </label>
-              <input
-                type="number"
-                placeholder="Étage..."
-                value={filters.etage}
-                onChange={(e) => handleFilterChange({ ...filters, etage: e.target.value })}
-                className="input"
-                min="0"
-                max="50"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => handleFilterChange({ statut: '', type: '', etage: '', search: '' })}
-                className="btn-outline w-full"
-              >
-                <FunnelIcon className="w-4 h-4 mr-2" />
-                Réinitialiser
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
 
       {/* Spaces List */}
       <div className="card">
@@ -449,34 +538,38 @@ const Spaces = () => {
         </div>
       )}
 
-      {/* Modal for Add/Edit */}
-      {showModal && (
-        <SpaceModal
-          space={editingSpace}
-          onClose={() => {
-            setShowModal(false);
-            setEditingSpace(null);
-          }}
-          onSubmit={handleSubmit}
-        />
-      )}
+          {/* Modal for Add/Edit */}
+          {showModal && (
+            <SpaceModal
+              space={editingSpace}
+              onClose={() => {
+                setShowModal(false);
+                setEditingSpace(null);
+              }}
+              onSubmit={handleSubmit}
+            />
+          )}
 
-      {/* Modal for View Details */}
-      {viewingSpace && (
-        <SpaceDetailsModal
-          space={viewingSpace}
-          onClose={() => setViewingSpace(null)}
-        />
-      )}
+          {/* Modal for View Details */}
+          {viewingSpace && (
+            <SpaceDetailsModal
+              space={viewingSpace}
+              onClose={() => setViewingSpace(null)}
+            />
+          )}
 
-      {/* Modal for View Articles */}
-      {viewingArticles && (
-        <ArticlesModal
-          space={viewingArticles}
-          articles={articlesData}
-          loading={articlesLoading}
-          onClose={() => setViewingArticles(null)}
-        />
+          {/* Modal for View Articles */}
+          {viewingArticles && (
+            <ArticlesModal
+              space={viewingArticles}
+              articles={articlesData}
+              loading={articlesLoading}
+              onClose={() => setViewingArticles(null)}
+            />
+          )}
+        </>
+      ) : (
+        <BonsMenage />
       )}
     </div>
   );

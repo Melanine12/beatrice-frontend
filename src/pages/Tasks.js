@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { 
@@ -15,6 +16,7 @@ import {
 
 const Tasks = () => {
   const { user, hasPermission } = useAuth();
+  const { addNotification } = useNotifications();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -139,10 +141,26 @@ const Tasks = () => {
         // Update task
         await api.put(`/taches/${selectedTask.id}`, formData);
         toast.success('Tâche mise à jour avec succès');
+        
+        // Notification pour la modification
+        addNotification({
+          title: 'Tâche modifiée',
+          message: `La tâche "${formData.titre}" a été modifiée par ${user?.prenom} ${user?.nom}`,
+          type: 'info',
+          link: '/tasks'
+        });
       } else {
         // Create task
         await api.post('/taches', formData);
         toast.success('Tâche créée avec succès');
+        
+        // Notification pour la création
+        addNotification({
+          title: 'Nouvelle tâche créée',
+          message: `Une nouvelle tâche "${formData.titre}" a été créée par ${user?.prenom} ${user?.nom}`,
+          type: 'success',
+          link: '/tasks'
+        });
       }
       setShowModal(false);
       resetForm();
@@ -150,6 +168,14 @@ const Tasks = () => {
     } catch (error) {
       console.error('Error saving task:', error);
       toast.error('Erreur lors de la sauvegarde de la tâche');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur tâche',
+        message: `Erreur lors de la sauvegarde de la tâche: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/tasks'
+      });
     }
   };
 
@@ -160,48 +186,129 @@ const Tasks = () => {
     }
 
     try {
+      // Récupérer les informations de la tâche avant suppression pour la notification
+      const taskToDelete = tasks.find(t => t.id === taskId);
+      
       await api.delete(`/taches/${taskId}`);
       toast.success('Tâche supprimée avec succès');
+      
+      // Notification pour la suppression
+      addNotification({
+        title: 'Tâche supprimée',
+        message: `La tâche "${taskToDelete?.titre || 'inconnue'}" a été supprimée par ${user?.prenom} ${user?.nom}`,
+        type: 'warning',
+        link: '/tasks'
+      });
+      
       fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Erreur lors de la suppression de la tâche');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression tâche',
+        message: `Erreur lors de la suppression de la tâche: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/tasks'
+      });
     }
   };
 
   // Handle status change
   const handleStatusChange = async (taskId, newStatus) => {
     try {
+      // Récupérer les informations de la tâche pour la notification
+      const task = tasks.find(t => t.id === taskId);
+      const oldStatus = task?.statut;
+      
       await api.put(`/taches/${taskId}`, { statut: newStatus });
       toast.success('Statut de la tâche mis à jour');
+      
+      // Notification pour le changement de statut
+      addNotification({
+        title: 'Statut de tâche modifié',
+        message: `Le statut de la tâche "${task?.titre || 'inconnue'}" a été changé de "${oldStatus}" à "${newStatus}" par ${user?.prenom} ${user?.nom}`,
+        type: 'info',
+        link: '/tasks'
+      });
+      
       fetchTasks();
     } catch (error) {
       console.error('Error updating task status:', error);
       toast.error('Erreur lors de la mise à jour du statut');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur changement de statut',
+        message: `Erreur lors du changement de statut de la tâche: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/tasks'
+      });
     }
   };
 
   // Start task
   const handleStartTask = async (taskId) => {
     try {
+      // Récupérer les informations de la tâche pour la notification
+      const task = tasks.find(t => t.id === taskId);
+      
       await api.post(`/taches/${taskId}/start`);
       toast.success('Tâche démarrée avec succès');
+      
+      // Notification pour le démarrage de tâche
+      addNotification({
+        title: 'Tâche démarrée',
+        message: `La tâche "${task?.titre || 'inconnue'}" a été démarrée par ${user?.prenom} ${user?.nom}`,
+        type: 'success',
+        link: '/tasks'
+      });
+      
       fetchTasks();
     } catch (error) {
       console.error('Error starting task:', error);
       toast.error('Erreur lors du démarrage de la tâche');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur démarrage tâche',
+        message: `Erreur lors du démarrage de la tâche: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/tasks'
+      });
     }
   };
 
   // Complete task
   const handleCompleteTask = async (taskId) => {
     try {
+      // Récupérer les informations de la tâche pour la notification
+      const task = tasks.find(t => t.id === taskId);
+      
       await api.post(`/taches/${taskId}/complete`);
       toast.success('Tâche terminée avec succès');
+      
+      // Notification pour la finalisation de tâche
+      addNotification({
+        title: 'Tâche terminée',
+        message: `La tâche "${task?.titre || 'inconnue'}" a été terminée par ${user?.prenom} ${user?.nom}`,
+        type: 'success',
+        link: '/tasks'
+      });
+      
       fetchTasks();
     } catch (error) {
       console.error('Error completing task:', error);
       toast.error('Erreur lors de la finalisation de la tâche');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur finalisation tâche',
+        message: `Erreur lors de la finalisation de la tâche: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/tasks'
+      });
     }
   };
 

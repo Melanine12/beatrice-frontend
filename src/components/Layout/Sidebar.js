@@ -21,7 +21,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier }) => {
+const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier, isAgent, isWebMaster, isSuperviseurStock, isSuperviseurHousing, isSuperviseurFinance, isSuperviseurRH }) => {
   const { user } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -129,6 +129,94 @@ const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier }) => {
     </div>
   );
 
+  // Special navigation component for Agent
+  const AgentNavigation = () => (
+    <div className="space-y-2">
+      {navigation.map((item) => (
+        <NavLink
+          key={item.name}
+          to={item.href}
+          className={({ isActive }) =>
+            `group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
+              isActive
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
+            }`
+          }
+        >
+          {React.createElement(iconMap[item.icon], { className: "h-6 w-6 shrink-0", "aria-hidden": "true" })}
+          {item.name}
+        </NavLink>
+      ))}
+    </div>
+  );
+
+  // Special navigation component for Web Master
+  const WebMasterNavigation = () => (
+    <div className="space-y-2">
+      {navigation.map((item) => (
+        <NavLink
+          key={item.name}
+          to={item.href}
+          className={({ isActive }) =>
+            `group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold ${
+              isActive
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
+            }`
+          }
+        >
+          {React.createElement(iconMap[item.icon], { className: "h-6 w-6 shrink-0", "aria-hidden": "true" })}
+          {item.name}
+        </NavLink>
+      ))}
+    </div>
+  );
+
+  // Special navigation component for Superviseur Stock
+  const SuperviseurStockNavigation = () => (
+    <div className="space-y-2">
+      {navigation.map((item) => (
+        <li key={item.name}>
+          <NavigationItem item={item} />
+        </li>
+      ))}
+    </div>
+  );
+
+  // Special navigation component for Superviseur Housing
+  const SuperviseurHousingNavigation = () => (
+    <div className="space-y-2">
+      {navigation.map((item) => (
+        <li key={item.name}>
+          <NavigationItem item={item} />
+        </li>
+      ))}
+    </div>
+  );
+
+  // Special navigation component for Superviseur Finance
+  const SuperviseurFinanceNavigation = () => (
+    <div className="space-y-2">
+      {navigation.map((item) => (
+        <li key={item.name}>
+          <NavigationItem item={item} />
+        </li>
+      ))}
+    </div>
+  );
+
+  // Special navigation component for Superviseur RH
+  const SuperviseurRHNavigation = () => (
+    <div className="space-y-2">
+      {navigation.map((item) => (
+        <li key={item.name}>
+          <NavigationItem item={item} />
+        </li>
+      ))}
+    </div>
+  );
+
   return (
     <>
       {/* Mobile sidebar */}
@@ -160,7 +248,7 @@ const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier }) => {
                 <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 dark:bg-gray-800">
                   <div className="flex h-16 shrink-0 items-center">
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                      {isGuichetier ? 'Espace Guichetier' : 'Hôtel Beatrice'}
+                      {isGuichetier ? 'Espace Guichetier' : isAgent ? 'Espace Agent' : isWebMaster ? 'Espace Web Master' : isSuperviseurStock ? 'Espace Superviseur Stock' : isSuperviseurHousing ? 'Espace Superviseur Housing' : isSuperviseurFinance ? 'Espace Superviseur Finance' : isSuperviseurRH ? 'Espace Superviseur RH' : 'Hôtel Beatrice'}
                     </h1>
                   </div>
                   <nav className="flex flex-1 flex-col">
@@ -169,6 +257,18 @@ const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier }) => {
                         <ul role="list" className="-mx-2 space-y-1">
                           {isGuichetier ? (
                             <GuichetierNavigation />
+                          ) : isAgent ? (
+                            <AgentNavigation />
+                          ) : isWebMaster ? (
+                            <WebMasterNavigation />
+                          ) : isSuperviseurStock ? (
+                            <SuperviseurStockNavigation />
+                          ) : isSuperviseurHousing ? (
+                            <SuperviseurHousingNavigation />
+                          ) : isSuperviseurFinance ? (
+                            <SuperviseurFinanceNavigation />
+                          ) : isSuperviseurRH ? (
+                            <SuperviseurRHNavigation />
                           ) : (
                             navigation.map((item) => (
                               <li key={item.name}>
@@ -192,7 +292,7 @@ const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier }) => {
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-800">
           <div className="flex h-16 shrink-0 items-center">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              {isGuichetier ? 'Espace Guichetier' : 'Hôtel Beatrice'}
+              {isGuichetier ? 'Espace Guichetier' : isAgent ? 'Espace Agent' : isWebMaster ? 'Espace Web Master' : isSuperviseurStock ? 'Espace Superviseur Stock' : isSuperviseurHousing ? 'Espace Superviseur Housing' : isSuperviseurFinance ? 'Espace Superviseur Finance' : isSuperviseurRH ? 'Espace Superviseur RH' : 'Hôtel Beatrice'}
             </h1>
           </div>
           <nav className="flex flex-1 flex-col">
@@ -201,6 +301,18 @@ const Sidebar = ({ navigation, sidebarOpen, setSidebarOpen, isGuichetier }) => {
                 <ul role="list" className="-mx-2 space-y-1">
                   {isGuichetier ? (
                     <GuichetierNavigation />
+                  ) : isAgent ? (
+                    <AgentNavigation />
+                  ) : isWebMaster ? (
+                    <WebMasterNavigation />
+                  ) : isSuperviseurStock ? (
+                    <SuperviseurStockNavigation />
+                  ) : isSuperviseurHousing ? (
+                    <SuperviseurHousingNavigation />
+                  ) : isSuperviseurFinance ? (
+                    <SuperviseurFinanceNavigation />
+                  ) : isSuperviseurRH ? (
+                    <SuperviseurRHNavigation />
                   ) : (
                     navigation.map((item) => (
                       <li key={item.name}>

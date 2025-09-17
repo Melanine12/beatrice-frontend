@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -30,6 +31,7 @@ import {
 
 const Inventory = () => {
   const { user, hasPermission } = useAuth();
+  const { addNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState('inventory');
   const [inventory, setInventory] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
@@ -387,9 +389,25 @@ const Inventory = () => {
           if (editingItem) {
             await api.put(`/inventaire/${editingItem.id}`, formData);
             toast.success('Article mis à jour avec succès');
+            
+            // Notification pour la modification d'article
+            addNotification({
+              title: 'Article modifié',
+              message: `L'article "${formData.nom || formData.designation}" a été modifié par ${user?.prenom} ${user?.nom}`,
+              type: 'info',
+              link: '/inventory'
+            });
           } else {
             await api.post('/inventaire', formData);
             toast.success('Article créé avec succès');
+            
+            // Notification pour la création d'article
+            addNotification({
+              title: 'Nouvel article créé',
+              message: `Un nouvel article "${formData.nom || formData.designation}" a été créé par ${user?.prenom} ${user?.nom}`,
+              type: 'success',
+              link: '/inventory'
+            });
           }
           fetchInventory();
           break;
@@ -397,9 +415,25 @@ const Inventory = () => {
           if (editingItem) {
             await api.put(`/fournisseurs/${editingItem.id}`, formData);
             toast.success('Fournisseur mis à jour avec succès');
+            
+            // Notification pour la modification de fournisseur
+            addNotification({
+              title: 'Fournisseur modifié',
+              message: `Le fournisseur "${formData.nom || formData.raison_sociale}" a été modifié par ${user?.prenom} ${user?.nom}`,
+              type: 'info',
+              link: '/inventory'
+            });
           } else {
             await api.post('/fournisseurs', formData);
             toast.success('Fournisseur créé avec succès');
+            
+            // Notification pour la création de fournisseur
+            addNotification({
+              title: 'Nouveau fournisseur créé',
+              message: `Un nouveau fournisseur "${formData.nom || formData.raison_sociale}" a été créé par ${user?.prenom} ${user?.nom}`,
+              type: 'success',
+              link: '/inventory'
+            });
           }
           fetchFournisseurs();
           break;
@@ -407,9 +441,25 @@ const Inventory = () => {
           if (editingItem) {
             await api.put(`/achats/${editingItem.id}`, formData);
             toast.success('Achat mis à jour avec succès');
+            
+            // Notification pour la modification d'achat
+            addNotification({
+              title: 'Achat modifié',
+              message: `L'achat "${formData.reference || formData.description}" a été modifié par ${user?.prenom} ${user?.nom}`,
+              type: 'info',
+              link: '/inventory'
+            });
           } else {
             await api.post('/achats', formData);
             toast.success('Achat créé avec succès');
+            
+            // Notification pour la création d'achat
+            addNotification({
+              title: 'Nouvel achat créé',
+              message: `Un nouvel achat "${formData.reference || formData.description}" a été créé par ${user?.prenom} ${user?.nom}`,
+              type: 'success',
+              link: '/inventory'
+            });
           }
           fetchAchats();
           break;
@@ -417,9 +467,25 @@ const Inventory = () => {
           if (editingItem) {
             await api.put(`/mouvements-stock/${editingItem.id}`, formData);
             toast.success('Mouvement mis à jour avec succès');
+            
+            // Notification pour la modification de mouvement
+            addNotification({
+              title: 'Mouvement de stock modifié',
+              message: `Le mouvement de stock "${formData.type || 'Mouvement'}" a été modifié par ${user?.prenom} ${user?.nom}`,
+              type: 'info',
+              link: '/inventory'
+            });
           } else {
             await api.post('/mouvements-stock', formData);
             toast.success('Mouvement créé avec succès');
+            
+            // Notification pour la création de mouvement
+            addNotification({
+              title: 'Nouveau mouvement de stock',
+              message: `Un nouveau mouvement de stock "${formData.type || 'Mouvement'}" a été créé par ${user?.prenom} ${user?.nom}`,
+              type: 'success',
+              link: '/inventory'
+            });
           }
           fetchMouvementsStock();
           break;
@@ -427,9 +493,25 @@ const Inventory = () => {
           if (editingItem) {
             await api.put(`/entrepots/${editingItem.id}`, formData);
             toast.success('Entrepôt/dépôt mis à jour avec succès');
+            
+            // Notification pour la modification d'entrepôt
+            addNotification({
+              title: 'Entrepôt modifié',
+              message: `L'entrepôt "${formData.nom || formData.designation}" a été modifié par ${user?.prenom} ${user?.nom}`,
+              type: 'info',
+              link: '/inventory'
+            });
           } else {
             await api.post('/entrepots', formData);
             toast.success('Entrepôt/dépôt créé avec succès');
+            
+            // Notification pour la création d'entrepôt
+            addNotification({
+              title: 'Nouvel entrepôt créé',
+              message: `Un nouvel entrepôt "${formData.nom || formData.designation}" a été créé par ${user?.prenom} ${user?.nom}`,
+              type: 'success',
+              link: '/inventory'
+            });
           }
           fetchEntrepots();
           break;
@@ -441,6 +523,14 @@ const Inventory = () => {
       console.error('Error saving item:', error);
       console.error('Error details:', error.response?.data);
       toast.error('Erreur lors de la sauvegarde');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur inventaire',
+        message: `Erreur lors de la sauvegarde: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/inventory'
+      });
     }
   };
 
@@ -503,36 +593,109 @@ const Inventory = () => {
     }
 
     try {
+      // Récupérer les informations de l'élément avant suppression pour la notification
+      let itemToDelete = null;
+      switch (activeTab) {
+        case 'inventory':
+          itemToDelete = inventory.find(item => item.id === id);
+          break;
+        case 'fournisseurs':
+          itemToDelete = fournisseurs.find(item => item.id === id);
+          break;
+        case 'achats':
+          itemToDelete = achats.find(item => item.id === id);
+          break;
+        case 'mouvements':
+          itemToDelete = mouvementsStock.find(item => item.id === id);
+          break;
+        case 'entrepots':
+          itemToDelete = entrepots.find(item => item.id === id);
+          break;
+      }
+
       switch (activeTab) {
         case 'inventory':
           await api.delete(`/inventaire/${id}`);
           toast.success('Article supprimé avec succès');
+          
+          // Notification pour la suppression d'article
+          addNotification({
+            title: 'Article supprimé',
+            message: `L'article "${itemToDelete?.nom || itemToDelete?.designation || 'inconnu'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+            type: 'warning',
+            link: '/inventory'
+          });
+          
           fetchInventory();
           break;
         case 'fournisseurs':
           await api.delete(`/fournisseurs/${id}`);
           toast.success('Fournisseur supprimé avec succès');
+          
+          // Notification pour la suppression de fournisseur
+          addNotification({
+            title: 'Fournisseur supprimé',
+            message: `Le fournisseur "${itemToDelete?.nom || itemToDelete?.raison_sociale || 'inconnu'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+            type: 'warning',
+            link: '/inventory'
+          });
+          
           fetchFournisseurs();
           break;
         case 'achats':
           await api.delete(`/achats/${id}`);
           toast.success('Achat supprimé avec succès');
+          
+          // Notification pour la suppression d'achat
+          addNotification({
+            title: 'Achat supprimé',
+            message: `L'achat "${itemToDelete?.reference || itemToDelete?.description || 'inconnu'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+            type: 'warning',
+            link: '/inventory'
+          });
+          
           fetchAchats();
           break;
         case 'mouvements':
           await api.delete(`/mouvements-stock/${id}`);
           toast.success('Mouvement supprimé avec succès');
+          
+          // Notification pour la suppression de mouvement
+          addNotification({
+            title: 'Mouvement de stock supprimé',
+            message: `Le mouvement de stock "${itemToDelete?.type || 'Mouvement'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+            type: 'warning',
+            link: '/inventory'
+          });
+          
           fetchMouvementsStock();
           break;
         case 'entrepots':
           await api.delete(`/entrepots/${id}`);
           toast.success('Entrepôt/dépôt supprimé avec succès');
+          
+          // Notification pour la suppression d'entrepôt
+          addNotification({
+            title: 'Entrepôt supprimé',
+            message: `L'entrepôt "${itemToDelete?.nom || itemToDelete?.designation || 'inconnu'}" a été supprimé par ${user?.prenom} ${user?.nom}`,
+            type: 'warning',
+            link: '/inventory'
+          });
+          
           fetchEntrepots();
           break;
       }
     } catch (error) {
       console.error('Error deleting item:', error);
       toast.error('Erreur lors de la suppression');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur suppression inventaire',
+        message: `Erreur lors de la suppression: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/inventory'
+      });
     }
   };
 
@@ -583,12 +746,32 @@ const Inventory = () => {
 
   const handleApproveAchat = async (id) => {
     try {
+      // Récupérer les informations de l'achat pour la notification
+      const achat = achats.find(item => item.id === id);
+      
       await api.post(`/achats/${id}/approve`);
       toast.success('Achat approuvé avec succès');
+      
+      // Notification pour l'approbation d'achat
+      addNotification({
+        title: 'Achat approuvé',
+        message: `L'achat "${achat?.reference || achat?.description || 'inconnu'}" a été approuvé par ${user?.prenom} ${user?.nom}`,
+        type: 'success',
+        link: '/inventory'
+      });
+      
       fetchAchats();
     } catch (error) {
       console.error('Error approving purchase:', error);
       toast.error('Erreur lors de l\'approbation');
+      
+      // Notification d'erreur
+      addNotification({
+        title: 'Erreur approbation achat',
+        message: `Erreur lors de l'approbation de l'achat: ${error.response?.data?.message || 'Erreur inconnue'}`,
+        type: 'error',
+        link: '/inventory'
+      });
     }
   };
 

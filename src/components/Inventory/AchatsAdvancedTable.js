@@ -195,6 +195,7 @@ const AchatsAdvancedTable = ({ achats, onEdit, onApprove, onViewDetails }) => {
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
                                   {ligne.quantite} x {ligne.prix_unitaire}$
+                                  {ligne.grammage && ` - ${ligne.grammage}g`}
                                   {ligne.inventaire?.categorie && ` (${ligne.inventaire.categorie})`}
                                 </div>
                               </div>

@@ -10,8 +10,6 @@ import {
   CheckCircleIcon,
   InformationCircleIcon,
   ClockIcon,
-  PlusIcon,
-  FireIcon,
   ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
@@ -24,22 +22,10 @@ const Notifications = () => {
     markAsRead,
     markAllAsRead,
     removeNotification,
-    clearAllNotifications,
-    addNotification,
-    startRealTimeSimulation,
-    stopSimulation,
-    simulateUrgentNotification,
-    simulateSystemError,
-    simulateProblematicNotification,
-    simulateTaskNotification,
-    simulateExpenseNotification,
-    simulateInventoryNotification,
-    simulateErrorNotification,
-    isSimulationActive
+    clearAllNotifications
   } = useNotifications();
 
   const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
-  const [showSimulator, setShowSimulator] = useState(false);
 
   const filteredNotifications = notifications.filter(notification => {
     if (filter === 'unread') return !notification.read;
@@ -58,7 +44,7 @@ const Notifications = () => {
       case 'error':
         return <ExclamationCircleIcon className="h-5 w-5 text-red-500" />;
       case 'urgent':
-        return <FireIcon className="h-5 w-5 text-orange-500" />;
+        return <ExclamationTriangleIcon className="h-5 w-5 text-orange-500" />;
       default:
         return <BellIcon className="h-5 w-5 text-gray-500" />;
     }
@@ -126,13 +112,6 @@ const Notifications = () => {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setShowSimulator(!showSimulator)}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Simulateur
-            </button>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
@@ -154,122 +133,6 @@ const Notifications = () => {
           </div>
         </div>
 
-        {/* Simulateur de notifications */}
-        {showSimulator && (
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              🎮 Simulateur de notifications en temps réel
-            </h3>
-            
-            {/* Contrôles de simulation automatique */}
-            <div className="mb-6 p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">
-                🔄 Simulation automatique
-              </h4>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={startRealTimeSimulation}
-                  disabled={isSimulationActive}
-                  className={`px-4 py-2 rounded-md text-sm font-medium ${
-                    isSimulationActive
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-green-100 hover:bg-green-200 text-green-800'
-                  }`}
-                >
-                  ▶️ Démarrer simulation
-                </button>
-                <button
-                  onClick={stopSimulation}
-                  disabled={!isSimulationActive}
-                  className={`px-4 py-2 rounded-md text-sm font-medium ${
-                    !isSimulationActive
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-red-100 hover:bg-red-200 text-red-800'
-                  }`}
-                >
-                  ⏹️ Arrêter simulation
-                </button>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  isSimulationActive
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {isSimulationActive ? '🟢 Simulation active' : '🔴 Simulation inactive'}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                La simulation automatique génère des notifications réalistes toutes les 45 secondes
-              </p>
-            </div>
-
-            {/* Boutons de simulation manuelle */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <button
-                onClick={() => {
-                  simulateUrgentNotification();
-                  toast.success('Notification urgente simulée !');
-                }}
-                className="flex items-center justify-center p-3 bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-md transition-colors"
-              >
-                <FireIcon className="h-5 w-5 mr-2" />
-                Urgent
-              </button>
-              <button
-                onClick={() => {
-                  simulateProblematicNotification();
-                  toast.success('Notification de problématique simulée !');
-                }}
-                className="flex items-center justify-center p-3 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-md transition-colors"
-              >
-                <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
-                Problématique
-              </button>
-              <button
-                onClick={() => {
-                  simulateTaskNotification();
-                  toast.success('Notification de tâche simulée !');
-                }}
-                className="flex items-center justify-center p-3 bg-green-100 hover:bg-green-200 text-green-800 rounded-md transition-colors"
-              >
-                <CheckCircleIcon className="h-5 w-5 mr-2" />
-                Tâche
-              </button>
-              <button
-                onClick={() => {
-                  simulateExpenseNotification();
-                  toast.success('Notification de dépense simulée !');
-                }}
-                className="flex items-center justify-center p-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-md transition-colors"
-              >
-                <InformationCircleIcon className="h-5 w-5 mr-2" />
-                Dépense
-              </button>
-              <button
-                onClick={() => {
-                  simulateInventoryNotification();
-                  toast.success('Notification d\'inventaire simulée !');
-                }}
-                className="flex items-center justify-center p-3 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-md transition-colors"
-              >
-                <BellIcon className="h-5 w-5 mr-2" />
-                Inventaire
-              </button>
-              <button
-                onClick={() => {
-                  simulateErrorNotification();
-                  toast.success('Notification d\'erreur simulée !');
-                }}
-                className="flex items-center justify-center p-3 bg-red-100 hover:bg-red-200 text-red-800 rounded-md transition-colors"
-              >
-                <ExclamationCircleIcon className="h-5 w-5 mr-2" />
-                Erreur
-              </button>
-            </div>
-            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-              Cliquez sur les boutons pour simuler différents types de notifications en temps réel
-            </p>
-          </div>
-        )}
 
         {/* Filtres */}
         <div className="mt-6 flex space-x-4">
