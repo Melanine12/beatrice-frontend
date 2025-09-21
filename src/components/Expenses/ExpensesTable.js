@@ -132,7 +132,20 @@ const ExpensesTable = ({
       {/* Action Bar with New Expense Button */}
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          {expenses.length} dépense{expenses.length !== 1 ? 's' : ''} trouvée{expenses.length !== 1 ? 's' : ''}
+          {pagination.totalItems > 0 ? (
+            <>
+              Affichage de <span className="font-medium">{(pagination.currentPage - 1) * pagination.itemsPerPage + 1}</span>
+              {' '}à{' '}
+              <span className="font-medium">
+                {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+              </span>
+              {' '}sur{' '}
+              <span className="font-medium">{pagination.totalItems}</span>
+              {' '}dépense{pagination.totalItems !== 1 ? 's' : ''}
+            </>
+          ) : (
+            'Aucune dépense trouvée'
+          )}
         </div>
         <div className="flex space-x-2">
           {hasExactRole('Superviseur') && onNewExpense && (
@@ -149,7 +162,15 @@ const ExpensesTable = ({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative">
+        {loading && (
+          <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 flex items-center justify-center z-10">
+            <div className="flex items-center space-x-2">
+              <LoadingSpinner size="sm" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">Chargement...</span>
+            </div>
+          </div>
+        )}
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -440,13 +461,41 @@ const ExpensesTable = ({
         </table>
       </div>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          onPageChange={onPageChange}
-        />
+      {/* Pagination - Toujours afficher si il y a des éléments */}
+      {pagination.totalItems > 0 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            itemsPerPage={pagination.itemsPerPage}
+            onPageChange={onPageChange}
+            loading={loading}
+          />
+        </div>
+      )}
+
+      {/* Pagination pour mobile - version simplifiée */}
+      {pagination.totalItems > 0 && (
+        <div className="sm:hidden mt-4 flex justify-between items-center">
+          <button
+            onClick={() => onPageChange(pagination.currentPage - 1)}
+            disabled={pagination.currentPage === 1 || loading}
+            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+          >
+            Précédent
+          </button>
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            Page {pagination.currentPage} sur {pagination.totalPages}
+          </span>
+          <button
+            onClick={() => onPageChange(pagination.currentPage + 1)}
+            disabled={pagination.currentPage === pagination.totalPages || loading}
+            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+          >
+            Suivant
+          </button>
+        </div>
       )}
     </div>
   );

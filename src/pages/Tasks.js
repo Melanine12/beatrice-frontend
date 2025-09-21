@@ -410,6 +410,15 @@ const Tasks = () => {
     return new Date(task.date_limite) < new Date();
   };
 
+  // Check if user is responsible for the task's department
+  const isDepartmentManager = (task) => {
+    // Check if task has a problematique with a department
+    if (task.problematique && task.problematique.departement) {
+      return task.problematique.departement.responsable_id === user?.id;
+    }
+    return false;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -610,42 +619,48 @@ const Tasks = () => {
                                 <EyeIcon className="h-4 w-4" />
                               </button>
                               
-                              {hasPermission('Superviseur') && (
-                                <button
-                                  onClick={() => openEditModal(task)}
-                                  className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                >
-                                  <PencilIcon className="h-4 w-4" />
-                                </button>
-                              )}
+                              {/* Boutons d'actions - pas visibles pour les Agents */}
+                              {user?.role !== 'Agent' && (
+                                <>
+                                  {(isDepartmentManager(task) || 
+                                    (hasPermission('Administrateur') || hasPermission('Patron'))) && (
+                                    <button
+                                      onClick={() => openEditModal(task)}
+                                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    >
+                                      <PencilIcon className="h-4 w-4" />
+                                    </button>
+                                  )}
 
-                              {task.statut === 'À faire' && (
-                                <button
-                                  onClick={() => handleStartTask(task.id)}
-                                  className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                                  title="Démarrer la tâche"
-                                >
-                                  <PlayIcon className="h-4 w-4" />
-                                </button>
-                              )}
+                                  {task.statut === 'À faire' && (
+                                    <button
+                                      onClick={() => handleStartTask(task.id)}
+                                      className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                      title="Démarrer la tâche"
+                                    >
+                                      <PlayIcon className="h-4 w-4" />
+                                    </button>
+                                  )}
 
-                              {task.statut === 'En cours' && (
-                                <button
-                                  onClick={() => handleCompleteTask(task.id)}
-                                  className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                                  title="Terminer la tâche"
-                                >
-                                  <CheckIcon className="h-4 w-4" />
-                                </button>
-                              )}
+                                  {task.statut === 'En cours' && (
+                                    <button
+                                      onClick={() => handleCompleteTask(task.id)}
+                                      className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                      title="Terminer la tâche"
+                                    >
+                                      <CheckIcon className="h-4 w-4" />
+                                    </button>
+                                  )}
 
-                              {hasPermission('Administrateur') && (
-                                <button
-                                  onClick={() => handleDelete(task.id)}
-                                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                >
-                                  <TrashIcon className="h-4 w-4" />
-                                </button>
+                                  {hasPermission('Administrateur') && (
+                                    <button
+                                      onClick={() => handleDelete(task.id)}
+                                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                    >
+                                      <TrashIcon className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </td>
@@ -1054,8 +1069,10 @@ const Tasks = () => {
                 </div>
               )}
 
-              {/* Status change for supervisors */}
-              {hasPermission('Superviseur') && selectedTask.statut !== 'Terminée' && selectedTask.statut !== 'Annulée' && (
+              {/* Status change for department managers - pas visible pour les Agents */}
+              {user?.role !== 'Agent' && (isDepartmentManager(selectedTask) || 
+                (hasPermission('Administrateur') || hasPermission('Patron'))) && 
+                selectedTask.statut !== 'Terminée' && selectedTask.statut !== 'Annulée' && (
                 <div className="border-t pt-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Changer le statut

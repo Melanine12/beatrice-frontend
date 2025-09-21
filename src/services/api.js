@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_BASE_URL, API_TIMEOUT } from '../config/api';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || API_BASE_URL,
+  baseURL: API_BASE_URL, // Forcer l'utilisation de la configuration de production
   timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
@@ -43,10 +43,12 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    console.error('API Error:', error.response?.status, error.response?.data);
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Token expired or invalid - mais on ne redirige pas automatiquement pour debug
+      console.error('401 Unauthorized - Token may be invalid or expired');
+      // localStorage.removeItem('token');
+      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }

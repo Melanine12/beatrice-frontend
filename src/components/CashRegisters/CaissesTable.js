@@ -13,7 +13,7 @@ const CaissesTable = ({
   onItemsPerPageChange,
   pageLoading 
 }) => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
 
   const getStatusColor = (statut) => {
     switch (statut) {
@@ -163,7 +163,7 @@ const CaissesTable = ({
                     >
                       <EyeIcon className="w-4 h-4" />
                     </button>
-                    {hasPermission('Superviseur') && (
+                    {(hasPermission('Superviseur') || user?.role === 'Superviseur Finance') && (
                       <button
                         onClick={() => onEdit(caisse)}
                         className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
@@ -172,7 +172,7 @@ const CaissesTable = ({
                         <PencilIcon className="w-4 h-4" />
                       </button>
                     )}
-                    {hasPermission('Administrateur') && (
+                    {(hasPermission('Administrateur') || user?.role === 'Superviseur Finance') && (
                       <button
                         onClick={() => onDelete(caisse.id)}
                         className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"

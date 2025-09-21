@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Routes Render</title>
+</head>
+<body>
+    <h1>Test des Routes sur Render</h1>
+    <button onclick="testAllRoutes()">Tester toutes les routes</button>
+    <div id="results"></div>
+
+    <script>
+        async function testAllRoutes() {
+            const baseURL = 'https://beatrice-backend.onrender.com/api';
+            const token = localStorage.getItem('token');
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.innerHTML = '<h2>Résultats des tests :</h2>';
+            
+            const routes = [
+                { name: 'Users', path: '/users' },
+                { name: 'Départements', path: '/departements' },
+                { name: 'Contrats', path: '/contrats' },
+                { name: 'Documents RH', path: '/documents-rh' }
+            ];
+            
+            for (const route of routes) {
+                try {
+                    console.log(`🧪 Test de ${route.name}...`);
+                    const response = await fetch(`${baseURL}${route.path}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const status = response.status;
+                    const statusText = response.statusText;
+                    
+                    let result = '';
+                    if (status === 200) {
+                        result = `✅ ${route.name}: ${status} ${statusText} - Route fonctionnelle`;
+                    } else if (status === 401) {
+                        result = `❌ ${route.name}: ${status} ${statusText} - Authentification requise`;
+                    } else if (status === 404) {
+                        result = `❌ ${route.name}: ${status} ${statusText} - Route non trouvée`;
+                    } else {
+                        result = `⚠️ ${route.name}: ${status} ${statusText}`;
+                    }
+                    
+                    console.log(result);
+                    resultsDiv.innerHTML += `<p>${result}</p>`;
+                    
+                } catch (error) {
+                    const result = `❌ ${route.name}: Erreur - ${error.message}`;
+                    console.error(result);
+                    resultsDiv.innerHTML += `<p style="color: red;">${result}</p>`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

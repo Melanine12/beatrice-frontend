@@ -122,7 +122,7 @@ const Layout = () => {
     },
     { name: "Bons de prelevement", href: '/demandes-affectation', icon: 'ClipboardDocumentListIcon' },
     { name: "Demandes de fonds", href: '/demandes-fonds', icon: 'BanknotesIcon' },
-    { name: "Fiches d'exécution", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
+    { name: "Fiches d'intervention", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
     { name: "Cycle de Vie des Articles", href: '/cycle-vie-articles', icon: 'ArrowPathIcon' },
     { name: 'Utilisateurs', href: '/users', icon: 'UsersIcon' },
     { name: 'Notifications', href: '/notifications', icon: 'BellIcon' },
@@ -151,7 +151,7 @@ const Layout = () => {
       { name: 'Tableau de bord', href: '/dashboard', icon: 'HomeIcon' },
       { name: 'Problèmes', href: '/issues', icon: 'ExclamationTriangleIcon' },
       { name: 'Tâches', href: '/tasks', icon: 'ClipboardDocumentListIcon' },
-      { name: "Fiches d'exécution", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
+      { name: "Fiches d'intervention", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
       { name: 'Notifications', href: '/notifications', icon: 'BellIcon' }
     ];
   } else if (user?.role === 'Agent Chambre') {
@@ -161,7 +161,7 @@ const Layout = () => {
       { name: 'Espaces & Locaux', href: '/spaces', icon: 'BuildingOfficeIcon' },
       { name: 'Problèmes', href: '/issues', icon: 'ExclamationTriangleIcon' },
       { name: 'Tâches', href: '/tasks', icon: 'ClipboardDocumentListIcon' },
-      { name: "Fiches d'exécution", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
+      { name: "Fiches d'intervention", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
       { name: 'Notifications', href: '/notifications', icon: 'BellIcon' }
     ];
   } else if (user?.role === 'Web Master') {
@@ -199,7 +199,7 @@ const Layout = () => {
       { name: 'Espaces & Locaux', href: '/spaces', icon: 'BuildingOfficeIcon' },
       { name: 'Problèmes', href: '/issues', icon: 'ExclamationTriangleIcon' },
       { name: 'Tâches', href: '/tasks', icon: 'ClipboardDocumentListIcon' },
-      { name: "Fiches d'exécution", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
+      { name: "Fiches d'intervention", href: '/fiches-execution', icon: 'ClipboardDocumentListIcon' },
       { name: "Demandes de fonds", href: '/demandes-fonds', icon: 'BanknotesIcon' },
       { name: "Bons de prelevement", href: '/demandes-affectation', icon: 'ClipboardDocumentListIcon' },
       { name: 'Notifications', href: '/notifications', icon: 'BellIcon' }

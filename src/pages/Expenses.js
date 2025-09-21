@@ -37,7 +37,7 @@ const Expenses = () => {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 20
+    itemsPerPage: 10
   });
 
   useEffect(() => {
@@ -208,11 +208,13 @@ const Expenses = () => {
   };
 
   const handlePageChange = (newPage) => {
+    setPageLoading(true);
     setPagination(prev => ({
       ...prev,
       currentPage: newPage
     }));
   };
+
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);

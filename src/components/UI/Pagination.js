@@ -7,14 +7,16 @@ const Pagination = ({
   totalItems,
   itemsPerPage,
   onPageChange,
-  onItemsPerPageChange,
   loading = false
 }) => {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
     
-    if (totalPages <= maxVisiblePages) {
+    // Si il n'y a qu'une seule page, afficher juste cette page
+    if (totalPages === 1) {
+      pages.push(1);
+    } else if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
@@ -51,16 +53,9 @@ const Pagination = ({
     }
   };
 
-  const handleItemsPerPageChange = (e) => {
-    const newItemsPerPage = parseInt(e.target.value);
-    if (newItemsPerPage !== itemsPerPage) {
-      onItemsPerPageChange(newItemsPerPage);
-    }
-  };
 
-  if (totalPages <= 1) {
-    return null;
-  }
+  // Toujours afficher la pagination si il y a des éléments, même avec une seule page
+  // pour permettre de changer le nombre d'éléments par page
 
   return (
     <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
@@ -68,14 +63,17 @@ const Pagination = ({
       <div className="flex-1 flex justify-between sm:hidden">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1 || loading}
+          disabled={currentPage === 1 || loading || totalPages <= 1}
           className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
         >
           Précédent
         </button>
+        <span className="text-sm text-gray-700 dark:text-gray-300 self-center">
+          Page {currentPage} sur {totalPages}
+        </span>
         <button
           onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages || loading}
+          disabled={currentPage === totalPages || loading || totalPages <= 1}
           className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
         >
           Suivant
@@ -99,30 +97,12 @@ const Pagination = ({
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* Sélecteur d'éléments par page */}
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-700 dark:text-gray-300">
-              Éléments par page:
-            </label>
-            <select
-              value={itemsPerPage}
-              onChange={handleItemsPerPageChange}
-              disabled={loading}
-              className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-
           {/* Navigation des pages */}
           <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
             {/* Bouton Précédent */}
             <button
               onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1 || loading}
+              disabled={currentPage === 1 || loading || totalPages <= 1}
               className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
             >
               <span className="sr-only">Précédent</span>
@@ -150,7 +130,7 @@ const Pagination = ({
             {/* Bouton Suivant */}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages || loading}
+              disabled={currentPage === totalPages || loading || totalPages <= 1}
               className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
             >
               <span className="sr-only">Suivant</span>

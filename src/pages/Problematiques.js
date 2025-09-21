@@ -94,7 +94,10 @@ const Problematiques = () => {
       });
 
       const response = await api.get(`/problematiques?${params}`);
-      setProblematiques(response.data.problematiques);
+      const problematiquesData = response.data.problematiques;
+      console.log('📋 Problématiques récupérées:', problematiquesData);
+      console.log('👤 Utilisateur actuel:', { id: user?.id, role: user?.role, prenom: user?.prenom, nom: user?.nom });
+      setProblematiques(problematiquesData);
       setTotalPages(response.data.totalPages);
       setTotalItems(response.data.totalItems);
     } catch (error) {
@@ -148,7 +151,10 @@ const Problematiques = () => {
     try {
       setLoadingDepartements(true);
       const response = await api.get('/departements');
-      setDepartements(response.data.departements || []);
+      const departementsData = response.data.departements || [];
+      console.log('🏢 Départements récupérés:', departementsData);
+      console.log('🔍 Premier département avec responsable_id:', departementsData[0]);
+      setDepartements(departementsData);
     } catch (error) {
       console.error('Error fetching departements:', error);
       setDepartements([]);
@@ -513,6 +519,33 @@ const Problematiques = () => {
     return icons[status] || ExclamationTriangleIcon;
   };
 
+  // Check if user is responsible for the issue's department
+  const isDepartmentManager = (issue) => {
+    // First try to get responsable_id from the issue's departement object
+    let responsableId = issue.departement?.responsable_id;
+    
+    // If not available, get it from the departements list using departement_id
+    if (!responsableId && issue.departement_id) {
+      const departement = departements.find(d => d.id === issue.departement_id);
+      responsableId = departement?.responsable_id;
+    }
+    
+    console.log('🔍 Debug isDepartmentManager:', {
+      issueId: issue.id,
+      issueTitle: issue.titre,
+      issueDepartement: issue.departement,
+      issueDepartementId: issue.departement_id,
+      responsableIdFromIssue: issue.departement?.responsable_id,
+      responsableIdFromList: departements.find(d => d.id === issue.departement_id)?.responsable_id,
+      finalResponsableId: responsableId,
+      userId: user?.id,
+      userRole: user?.role,
+      isMatch: responsableId === user?.id
+    });
+    
+    return responsableId === user?.id;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -785,23 +818,30 @@ const Problematiques = () => {
                           >
                             <EyeIcon className="w-4 h-4" />
                           </button>
-                          {(hasPermission('Superviseur') || issue.rapporteur_id === user.id) && (
-                            <button
-                              onClick={() => openEditModal(issue)}
-                              className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
-                              title="Modifier"
-                            >
-                              <PencilIcon className="w-4 h-4" />
-                            </button>
-                          )}
-                          {hasPermission('Administrateur') && (
-                            <button
-                              onClick={() => handleDelete(issue.id)}
-                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                              title="Supprimer"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </button>
+                          {/* Boutons Modifier et Supprimer - pas visibles pour les Agents */}
+                          {user?.role !== 'Agent' && (
+                            <>
+                              {(isDepartmentManager(issue) || 
+                                (hasPermission('Administrateur') || hasPermission('Patron')) ||
+                                issue.rapporteur_id === user.id) && (
+                                <button
+                                  onClick={() => openEditModal(issue)}
+                                  className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
+                                  title="Modifier"
+                                >
+                                  <PencilIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                              {hasPermission('Administrateur') && (
+                                <button
+                                  onClick={() => handleDelete(issue.id)}
+                                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                  title="Supprimer"
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -1128,17 +1168,18 @@ const Problematiques = () => {
                 </div>
 
                 {/* Champs réservés aux superviseurs */}
-                {hasPermission('Superviseur') && (
-                  <>
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-                      <div className="mb-4">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                          <span className="mr-2">🔧</span>
-                          Champs modifiables (Superviseur)
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Ces champs peuvent être modifiés après la création de la problématique
-                        </p>
+                  {((formData.departement_id && departements.find(d => d.id === parseInt(formData.departement_id))?.responsable_id === user?.id) || 
+                    (hasPermission('Administrateur') || hasPermission('Patron'))) && (
+                    <>
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                            <span className="mr-2">🔧</span>
+                            Champs modifiables (Responsable de département)
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Ces champs peuvent être modifiés après la création de la problématique
+                          </p>
                         {editingIssue && (
                           <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                             <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -1219,8 +1260,9 @@ const Problematiques = () => {
                   </>
                 )}
 
-                {/* Champs réservés aux superviseurs */}
-                {hasPermission('Superviseur') && (
+                {/* Champs réservés aux responsables de département */}
+                {((formData.departement_id && departements.find(d => d.id === parseInt(formData.departement_id))?.responsable_id === user?.id) || 
+                  (hasPermission('Administrateur') || hasPermission('Patron'))) && (
                   <>
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -1282,6 +1324,8 @@ const Problematiques = () => {
           onClose={() => setViewingIssue(null)}
           onStatusChange={handleStatusChange}
           hasPermission={hasPermission}
+          user={user}
+          isDepartmentManager={isDepartmentManager}
         />
       )}
     </div>
@@ -1290,7 +1334,7 @@ const Problematiques = () => {
 
 
 // View Issue Modal Component
-const ViewIssueModal = ({ issue, onClose, onStatusChange, hasPermission }) => {
+const ViewIssueModal = ({ issue, onClose, onStatusChange, hasPermission, user, isDepartmentManager }) => {
   const [images, setImages] = useState([]);
   const [loadingImages, setLoadingImages] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -1400,7 +1444,9 @@ const ViewIssueModal = ({ issue, onClose, onStatusChange, hasPermission }) => {
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(issue.statut)}`}>
                     {issue.statut}
                   </span>
-                  {hasPermission('Superviseur') && (
+                  {/* Dropdown de changement de statut - pas visible pour les Agents */}
+                  {user?.role !== 'Agent' && (isDepartmentManager(issue) || 
+                    (hasPermission('Administrateur') || hasPermission('Patron'))) && (
                     <select
                       value={issue.statut}
                       onChange={(e) => onStatusChange(issue.id, e.target.value, issue.statut)}

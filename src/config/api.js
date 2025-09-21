@@ -15,14 +15,11 @@ const API_CONFIG = {
   }
 };
 
-// Détecter l'environnement
-const isDevelopment = process.env.NODE_ENV === 'development' || 
-                     process.env.REACT_APP_ENV === 'development' ||
-                     window.location.hostname === 'localhost' ||
-                     window.location.hostname === '127.0.0.1';
+// Détecter l'environnement - Forcer la production
+const isDevelopment = false; // Forcer l'utilisation de la configuration de production
 
 // Configuration active
-export const activeConfig = isDevelopment ? API_CONFIG.development : API_CONFIG.production;
+export const activeConfig = API_CONFIG.production;
 
 // URLs exportées
 export const API_BASE_URL = activeConfig.baseURL;

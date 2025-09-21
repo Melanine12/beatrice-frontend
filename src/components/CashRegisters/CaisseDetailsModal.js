@@ -160,7 +160,7 @@ const CaisseDetailsModal = ({ isOpen, onClose, caisse, onCaisseUpdate }) => {
                       Voir Transactions
                     </button>
                     
-                    {(user?.role === 'Superviseur' || user?.role === 'Administrateur' || user?.role === 'Patron') && (
+                    {(user?.role === 'Superviseur' || user?.role === 'Superviseur Finance' || user?.role === 'Administrateur' || user?.role === 'Patron') && (
                       <button
                         onClick={handleRecalculerSolde}
                         disabled={recalculating}

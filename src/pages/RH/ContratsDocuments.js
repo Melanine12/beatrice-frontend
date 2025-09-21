@@ -1,321 +1,337 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 import {
-  DocumentTextIcon,
-  UserIcon,
-  CalendarIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
   PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  DocumentIcon,
+  CloudArrowUpIcon,
   EyeIcon,
-  ArrowDownTrayIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon
+  CalendarIcon,
+  UserIcon,
+  BuildingOfficeIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const ContratsDocuments = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('contrats');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('tous');
+  const [contrats, setContrats] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [employes, setEmployes] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [selectedEmploye, setSelectedEmploye] = useState(null);
+  const [modalType, setModalType] = useState('create');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
-  // Données de démonstration
-  const employes = [
-    {
-      id: 1,
-      nom: 'Dupont',
-      prenom: 'Jean',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-      departement: 'IT',
-      poste: 'Développeur Senior'
-    },
-    {
-      id: 2,
-      nom: 'Martin',
-      prenom: 'Marie',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-      departement: 'RH',
-      poste: 'Responsable RH'
-    },
-    {
-      id: 3,
-      nom: 'Bernard',
-      prenom: 'Pierre',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      departement: 'Finance',
-      poste: 'Comptable'
-    },
-    {
-      id: 4,
-      nom: 'Leroy',
-      prenom: 'Sophie',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-      departement: 'Marketing',
-      poste: 'Chef de Projet'
-    },
-    {
-      id: 5,
-      nom: 'Moreau',
-      prenom: 'Thomas',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
-      departement: 'IT',
-      poste: 'Développeur'
-    }
-  ];
+  // États pour les formulaires
+  const [contratForm, setContratForm] = useState({
+    employe_id: '',
+    type_contrat: 'CDI',
+    numero_contrat: '',
+    date_debut: '',
+    date_fin: '',
+    salaire_brut: '',
+    salaire_net: '',
+    duree_hebdomadaire: '',
+    statut: 'Actif',
+    description: '',
+    conditions_particulieres: '',
+    date_signature: ''
+  });
 
-  const contrats = [
-    {
-      id: 1,
-      employeId: 1,
-      type: 'CDI',
-      statut: 'Actif',
-      dateDebut: '2023-01-15',
-      dateFin: null,
-      salaire: '4500€',
-      duree: 'Indéterminée',
-      couleur: 'green'
-    },
-    {
-      id: 2,
-      employeId: 2,
-      type: 'CDI',
-      statut: 'Actif',
-      dateDebut: '2022-06-01',
-      dateFin: null,
-      salaire: '3800€',
-      duree: 'Indéterminée',
-      couleur: 'green'
-    },
-    {
-      id: 3,
-      employeId: 3,
-      type: 'CDD',
-      statut: 'Expiré',
-      dateDebut: '2023-03-01',
-      dateFin: '2023-12-31',
-      salaire: '3200€',
-      duree: '10 mois',
-      couleur: 'red'
-    },
-    {
-      id: 4,
-      employeId: 4,
-      type: 'Stage',
-      statut: 'En attente',
-      dateDebut: '2024-02-01',
-      dateFin: '2024-08-31',
-      salaire: '600€',
-      duree: '6 mois',
-      couleur: 'yellow'
-    },
-    {
-      id: 5,
-      employeId: 5,
-      type: 'CDI',
-      statut: 'Actif',
-      dateDebut: '2023-09-01',
-      dateFin: null,
-      salaire: '2800€',
-      duree: 'Indéterminée',
-      couleur: 'green'
-    }
-  ];
+  const [documentForm, setDocumentForm] = useState({
+    employe_id: '',
+    contrat_id: '',
+    type_document: 'Contrat',
+    description: '',
+    date_emission: '',
+    date_expiration: '',
+    confidentialite: 'Interne'
+  });
 
-  const documents = [
-    {
-      id: 1,
-      employeId: 1,
-      nom: 'Contrat de travail',
-      type: 'Contrat',
-      statut: 'Validé',
-      dateCreation: '2023-01-15',
-      dateExpiration: null,
-      taille: '2.3 MB',
-      couleur: 'green'
-    },
-    {
-      id: 2,
-      employeId: 1,
-      nom: 'CV',
-      type: 'CV',
-      statut: 'Validé',
-      dateCreation: '2023-01-10',
-      dateExpiration: null,
-      taille: '1.8 MB',
-      couleur: 'green'
-    },
-    {
-      id: 3,
-      employeId: 2,
-      nom: 'Diplôme Master',
-      type: 'Diplôme',
-      statut: 'En attente',
-      dateCreation: '2022-06-01',
-      dateExpiration: null,
-      taille: '3.1 MB',
-      couleur: 'yellow'
-    },
-    {
-      id: 4,
-      employeId: 3,
-      nom: 'Certificat de formation',
-      type: 'Certificat',
-      statut: 'Expiré',
-      dateCreation: '2023-03-01',
-      dateExpiration: '2024-03-01',
-      taille: '1.2 MB',
-      couleur: 'red'
-    },
-    {
-      id: 5,
-      employeId: 4,
-      nom: 'Lettre de motivation',
-      type: 'Lettre',
-      statut: 'Validé',
-      dateCreation: '2024-01-15',
-      dateExpiration: null,
-      taille: '0.8 MB',
-      couleur: 'green'
-    }
-  ];
+  // Vérifier les permissions
+  const hasPermission = (role) => {
+    const allowedRoles = ['Superviseur RH', 'Administrateur', 'Patron'];
+    return allowedRoles.includes(user?.role);
+  };
 
-  const getEmployeById = (id) => employes.find(emp => emp.id === id);
+  // Charger les données initiales
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        console.log('🔄 Chargement des données pour l\'onglet:', activeTab);
+        console.log('👤 Utilisateur actuel:', user);
+        
+        await fetchEmployes();
+        if (activeTab === 'contrats') {
+          await fetchContrats();
+        } else {
+          await fetchDocuments();
+        }
+        
+        console.log('✅ Données chargées avec succès');
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement des données:', error);
+        console.error('Stack trace:', error.stack);
+        toast.error('Erreur lors du chargement des données');
+      }
+    };
 
-  const getStatusColor = (statut) => {
-    switch (statut) {
-      case 'Actif':
-      case 'Validé':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'En attente':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Expiré':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+    loadData();
+  }, [activeTab]);
+
+  // Si l'utilisateur n'a pas les permissions, afficher un message
+  if (!hasPermission(user?.role)) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Contrats & Documents RH
+          </h1>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                  Accès refusé
+                </h3>
+                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                  <p>Vous n'avez pas les permissions nécessaires pour accéder à cette section.</p>
+                  <p className="mt-1">Contactez votre administrateur pour obtenir l'accès.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const fetchEmployes = async () => {
+    try {
+      console.log('👥 Chargement des employés...');
+      const response = await api.get('/users');
+      console.log('✅ Employés chargés:', response.data.data?.length || 0);
+      setEmployes(response.data.data || []);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des employés:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+        return;
+      }
+      toast.error('Erreur lors du chargement des employés');
     }
   };
 
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'CDI':
-        return 'bg-blue-100 text-blue-800';
-      case 'CDD':
-        return 'bg-orange-100 text-orange-800';
-      case 'Stage':
-        return 'bg-purple-100 text-purple-800';
-      case 'Contrat':
-        return 'bg-green-100 text-green-800';
-      case 'CV':
-        return 'bg-blue-100 text-blue-800';
-      case 'Diplôme':
-        return 'bg-purple-100 text-purple-800';
-      case 'Certificat':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Lettre':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const fetchContrats = async () => {
+    setLoading(true);
+    try {
+      console.log('📋 Chargement des contrats...');
+      const response = await api.get('/contrats');
+      console.log('✅ Contrats chargés:', response.data.data?.length || 0);
+      setContrats(response.data.data || []);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des contrats:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      if (error.response?.status === 401) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+        return;
+      }
+      if (error.response?.status === 403) {
+        toast.error('Accès refusé. Vous n\'avez pas les permissions nécessaires.');
+        return;
+      }
+      toast.error('Erreur lors du chargement des contrats');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredContrats = contrats.filter(contrat => {
-    const employe = getEmployeById(contrat.employeId);
-    const matchesSearch = !searchTerm || 
-      employe.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employe.prenom.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'tous' || contrat.statut === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const fetchDocuments = async () => {
+    setLoading(true);
+    try {
+      console.log('📄 Chargement des documents...');
+      const response = await api.get('/documents-rh');
+      console.log('✅ Documents chargés:', response.data.data?.length || 0);
+      setDocuments(response.data.data || []);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des documents:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      if (error.response?.status === 401) {
+        toast.error('Session expirée. Veuillez vous reconnecter.');
+        return;
+      }
+      if (error.response?.status === 403) {
+        toast.error('Accès refusé. Vous n\'avez pas les permissions nécessaires.');
+        return;
+      }
+      toast.error('Erreur lors du chargement des documents');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredDocuments = documents.filter(doc => {
-    const employe = getEmployeById(doc.employeId);
-    const matchesSearch = !searchTerm || 
-      employe.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employe.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.nom.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'tous' || doc.statut === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const handleCreateContrat = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/contrats', contratForm);
+      toast.success('Contrat créé avec succès');
+      setShowModal(false);
+      resetContratForm();
+      fetchContrats();
+    } catch (error) {
+      console.error('Erreur lors de la création du contrat:', error);
+      toast.error('Erreur lors de la création du contrat');
+    }
+  };
 
-  const stats = {
-    totalContrats: contrats.length,
-    contratsActifs: contrats.filter(c => c.statut === 'Actif').length,
-    contratsExpires: contrats.filter(c => c.statut === 'Expiré').length,
-    totalDocuments: documents.length,
-    documentsValides: documents.filter(d => d.statut === 'Validé').length,
-    documentsExpires: documents.filter(d => d.statut === 'Expiré').length
+  const handleCreateDocument = async (e) => {
+    e.preventDefault();
+    if (selectedFiles.length === 0) {
+      toast.error('Veuillez sélectionner un fichier');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('fichier', selectedFiles[0]);
+      Object.keys(documentForm).forEach(key => {
+        if (documentForm[key]) {
+          formData.append(key, documentForm[key]);
+        }
+      });
+
+      await api.post('/documents-rh', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      toast.success('Document créé avec succès');
+      setShowModal(false);
+      resetDocumentForm();
+      setSelectedFiles([]);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Erreur lors de la création du document:', error);
+      toast.error('Erreur lors de la création du document');
+    }
+  };
+
+  const handleDeleteContrat = async (id) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce contrat ?')) {
+      try {
+        await api.delete(`/contrats/${id}`);
+        toast.success('Contrat supprimé avec succès');
+        fetchContrats();
+      } catch (error) {
+        console.error('Erreur lors de la suppression du contrat:', error);
+        toast.error('Erreur lors de la suppression du contrat');
+      }
+    }
+  };
+
+  const handleDeleteDocument = async (id) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
+      try {
+        await api.delete(`/documents-rh/${id}`);
+        toast.success('Document supprimé avec succès');
+        fetchDocuments();
+      } catch (error) {
+        console.error('Erreur lors de la suppression du document:', error);
+        toast.error('Erreur lors de la suppression du document');
+      }
+    }
+  };
+
+  const resetContratForm = () => {
+    setContratForm({
+      employe_id: '',
+      type_contrat: 'CDI',
+      numero_contrat: '',
+      date_debut: '',
+      date_fin: '',
+      salaire_brut: '',
+      salaire_net: '',
+      duree_hebdomadaire: '',
+      statut: 'Actif',
+      description: '',
+      conditions_particulieres: '',
+      date_signature: ''
+    });
+  };
+
+  const resetDocumentForm = () => {
+    setDocumentForm({
+      employe_id: '',
+      contrat_id: '',
+      type_document: 'Contrat',
+      description: '',
+      date_emission: '',
+      date_expiration: '',
+      confidentialite: 'Interne'
+    });
+  };
+
+  const openModal = (type, item = null) => {
+    setModalType(type);
+    setSelectedItem(item);
+    setShowModal(true);
+    
+    if (type === 'edit' && item) {
+      if (activeTab === 'contrats') {
+        setContratForm(item);
+      } else {
+        setDocumentForm(item);
+      }
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  };
+
+  const formatCurrency = (amount) => {
+    if (!amount) return '-';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF'
+    }).format(amount);
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Contrats & Documents</h1>
-        <p className="text-gray-600">Gestion des contrats et documents RH</p>
+    <div className="space-y-6">
+      {/* En-tête */}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Contrats & Documents RH
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Gestion des contrats et documents des employés
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <DocumentTextIcon className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Contrats</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalContrats}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircleIcon className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Contrats Actifs</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.contratsActifs}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <DocumentTextIcon className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Documents</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalDocuments}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-3 bg-red-100 rounded-lg">
-              <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Documents Expirés</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.documentsExpires}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+      {/* Onglets */}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('contrats')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'contrats'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
               Contrats
@@ -324,8 +340,8 @@ const ContratsDocuments = () => {
               onClick={() => setActiveTab('documents')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'documents'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
               Documents
@@ -333,183 +349,651 @@ const ContratsDocuments = () => {
           </nav>
         </div>
 
-        {/* Filters */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Rechercher par employé ou document..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="tous">Tous les statuts</option>
-                <option value="Actif">Actif</option>
-                <option value="En attente">En attente</option>
-                <option value="Expiré">Expiré</option>
-                <option value="Validé">Validé</option>
-              </select>
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Nouveau
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
         <div className="p-6">
-          {activeTab === 'contrats' && (
-            <div className="space-y-4">
-              {filteredContrats.map((contrat) => {
-                const employe = getEmployeById(contrat.employeId);
-                return (
-                  <div key={contrat.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={employe.avatar}
-                          alt={`${employe.prenom} ${employe.nom}`}
-                          className="h-12 w-12 rounded-full object-cover"
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {employe.prenom} {employe.nom}
-                          </h3>
-                          <p className="text-sm text-gray-600">{employe.poste} - {employe.departement}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getTypeColor(contrat.type)}`}>
-                          {contrat.type}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(contrat.statut)}`}>
-                          {contrat.statut}
-                        </span>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-gray-900">{contrat.salaire}</p>
-                          <p className="text-xs text-gray-500">{contrat.duree}</p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <EyeIcon className="h-5 w-5" />
-                          </button>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <ArrowDownTrayIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center text-sm text-gray-500">
-                      <CalendarIcon className="h-4 w-4 mr-1" />
-                      <span>Début: {new Date(contrat.dateDebut).toLocaleDateString('fr-FR')}</span>
-                      {contrat.dateFin && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <span>Fin: {new Date(contrat.dateFin).toLocaleDateString('fr-FR')}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* Barre d'actions */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {activeTab === 'contrats' ? 'Liste des Contrats' : 'Liste des Documents'}
+            </h2>
+            <button
+              onClick={() => openModal('create')}
+              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              {activeTab === 'contrats' ? 'Nouveau Contrat' : 'Nouveau Document'}
+            </button>
+          </div>
 
-          {activeTab === 'documents' && (
-            <div className="space-y-4">
-              {filteredDocuments.map((document) => {
-                const employe = getEmployeById(document.employeId);
-                return (
-                  <div key={document.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={employe.avatar}
-                          alt={`${employe.prenom} ${employe.nom}`}
-                          className="h-12 w-12 rounded-full object-cover"
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{document.nom}</h3>
-                          <p className="text-sm text-gray-600">{employe.prenom} {employe.nom} - {employe.poste}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(document.type)}`}>
-                          {document.type}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(document.statut)}`}>
-                          {document.statut}
-                        </span>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-gray-900">{document.taille}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(document.dateCreation).toLocaleDateString('fr-FR')}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <EyeIcon className="h-5 w-5" />
-                          </button>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <ArrowDownTrayIcon className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    {document.dateExpiration && (
-                      <div className="mt-4 flex items-center text-sm text-gray-500">
-                        <ClockIcon className="h-4 w-4 mr-1" />
-                        <span>Expire le: {new Date(document.dateExpiration).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          {/* Contenu des onglets */}
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              {activeTab === 'contrats' ? (
+                <ContratsTable 
+                  contrats={contrats}
+                  onEdit={(contrat) => openModal('edit', contrat)}
+                  onDelete={handleDeleteContrat}
+                  formatDate={formatDate}
+                  formatCurrency={formatCurrency}
+                />
+              ) : (
+                <DocumentsTable 
+                  documents={documents}
+                  onEdit={(document) => openModal('edit', document)}
+                  onDelete={handleDeleteDocument}
+                  formatDate={formatDate}
+                />
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Modal placeholder */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Nouveau Document</h3>
-            <p className="text-gray-600 mb-4">Fonctionnalité en cours de développement...</p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Créer
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal
+          type={modalType}
+          itemType={activeTab}
+          item={selectedItem}
+          formData={activeTab === 'contrats' ? contratForm : documentForm}
+          setFormData={activeTab === 'contrats' ? setContratForm : setDocumentForm}
+          employes={employes}
+          contrats={contrats}
+          selectedFiles={selectedFiles}
+          setSelectedFiles={setSelectedFiles}
+          onSubmit={activeTab === 'contrats' ? handleCreateContrat : handleCreateDocument}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedItem(null);
+            if (activeTab === 'contrats') {
+              resetContratForm();
+            } else {
+              resetDocumentForm();
+              setSelectedFiles([]);
+            }
+          }}
+        />
       )}
     </div>
   );
 };
+
+// Composant Table des Contrats
+const ContratsTable = ({ contrats, onEdit, onDelete, formatDate, formatCurrency }) => (
+  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead className="bg-gray-50 dark:bg-gray-700">
+      <tr>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Employé
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Type
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          N° Contrat
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Période
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Salaire
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Statut
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+      {contrats.map((contrat) => (
+        <tr key={contrat.id}>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <div className="flex items-center">
+              <UserIcon className="w-8 h-8 text-gray-400 mr-3" />
+              <div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {contrat.employe?.prenoms} {contrat.employe?.nom_famille}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {contrat.employe?.poste}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {contrat.type_contrat}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+            {contrat.numero_contrat}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center">
+              <CalendarIcon className="w-4 h-4 mr-1" />
+              {formatDate(contrat.date_debut)} - {formatDate(contrat.date_fin) || 'Indéterminé'}
+            </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+            {formatCurrency(contrat.salaire_brut)}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              contrat.statut === 'Actif' ? 'bg-green-100 text-green-800' :
+              contrat.statut === 'Expiré' ? 'bg-red-100 text-red-800' :
+              contrat.statut === 'Résilié' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {contrat.statut}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => onEdit(contrat)}
+                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(contrat.id)}
+                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+// Composant Table des Documents
+const DocumentsTable = ({ documents, onEdit, onDelete, formatDate }) => (
+  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead className="bg-gray-50 dark:bg-gray-700">
+      <tr>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Employé
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Type
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Fichier
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Date
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Confidentialité
+        </th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+      {documents.map((document) => (
+        <tr key={document.id}>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <div className="flex items-center">
+              <UserIcon className="w-8 h-8 text-gray-400 mr-3" />
+                        <div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {document.employe?.prenoms} {document.employe?.nom_famille}
+                        </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {document.employe?.poste}
+                        </div>
+                      </div>
+                    </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+              {document.type_document.replace('_', ' ')}
+            </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <div className="flex items-center">
+              <DocumentIcon className="w-5 h-5 text-gray-400 mr-2" />
+              <span className="text-sm text-gray-900 dark:text-white">
+                {document.nom_fichier_original}
+              </span>
+                    </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center">
+              <CalendarIcon className="w-4 h-4 mr-1" />
+              {formatDate(document.date_creation)}
+            </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              document.confidentialite === 'Public' ? 'bg-green-100 text-green-800' :
+              document.confidentialite === 'Interne' ? 'bg-blue-100 text-blue-800' :
+              document.confidentialite === 'Confidentiel' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {document.confidentialite}
+                        </span>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+              <button
+                onClick={() => window.open(document.url_cloudinary, '_blank')}
+                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                title="Voir le document"
+              >
+                <EyeIcon className="w-4 h-4" />
+                          </button>
+              <button
+                onClick={() => onEdit(document)}
+                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                <PencilIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(document.id)}
+                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+              >
+                <TrashIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+// Composant Modal
+const Modal = ({ 
+  type, 
+  itemType, 
+  item, 
+  formData, 
+  setFormData, 
+  employes, 
+  contrats, 
+  selectedFiles, 
+  setSelectedFiles, 
+  onSubmit, 
+  onClose 
+}) => {
+  const handleFileChange = (e) => {
+    setSelectedFiles(Array.from(e.target.files));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {type === 'create' ? 'Créer' : 'Modifier'} {itemType === 'contrats' ? 'un Contrat' : 'un Document'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            <XMarkIcon className="w-6 h-6" />
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-4">
+          {itemType === 'contrats' ? (
+            <ContratForm 
+              formData={formData}
+              setFormData={setFormData}
+              employes={employes}
+            />
+          ) : (
+            <DocumentForm 
+              formData={formData}
+              setFormData={setFormData}
+              employes={employes}
+              contrats={contrats}
+              selectedFiles={selectedFiles}
+              onFileChange={handleFileChange}
+            />
+          )}
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            >
+              {type === 'create' ? 'Créer' : 'Modifier'}
+            </button>
+          </div>
+        </form>
+        </div>
+    </div>
+  );
+};
+
+// Composant Formulaire Contrat
+const ContratForm = ({ formData, setFormData, employes }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Employé *
+      </label>
+      <select
+        value={formData.employe_id}
+        onChange={(e) => setFormData({...formData, employe_id: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        required
+      >
+        <option value="">Sélectionner un employé</option>
+        {employes.map(employe => (
+          <option key={employe.id} value={employe.id}>
+            {employe.prenoms} {employe.nom_famille} - {employe.poste}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Type de contrat *
+      </label>
+      <select
+        value={formData.type_contrat}
+        onChange={(e) => setFormData({...formData, type_contrat: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        required
+      >
+        <option value="CDI">CDI</option>
+        <option value="CDD">CDD</option>
+        <option value="Stage">Stage</option>
+        <option value="Interim">Intérim</option>
+        <option value="Freelance">Freelance</option>
+        <option value="Consultant">Consultant</option>
+      </select>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Numéro de contrat *
+      </label>
+      <input
+        type="text"
+        value={formData.numero_contrat}
+        onChange={(e) => setFormData({...formData, numero_contrat: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Date de début *
+      </label>
+      <input
+        type="date"
+        value={formData.date_debut}
+        onChange={(e) => setFormData({...formData, date_debut: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        required
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Date de fin
+      </label>
+      <input
+        type="date"
+        value={formData.date_fin}
+        onChange={(e) => setFormData({...formData, date_fin: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Salaire brut
+      </label>
+      <input
+        type="number"
+        value={formData.salaire_brut}
+        onChange={(e) => setFormData({...formData, salaire_brut: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Salaire net
+      </label>
+      <input
+        type="number"
+        value={formData.salaire_net}
+        onChange={(e) => setFormData({...formData, salaire_net: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Durée hebdomadaire (heures)
+      </label>
+      <input
+        type="number"
+        value={formData.duree_hebdomadaire}
+        onChange={(e) => setFormData({...formData, duree_hebdomadaire: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Statut
+      </label>
+      <select
+        value={formData.statut}
+        onChange={(e) => setFormData({...formData, statut: e.target.value})}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      >
+        <option value="Actif">Actif</option>
+        <option value="Expiré">Expiré</option>
+        <option value="Résilié">Résilié</option>
+        <option value="Suspendu">Suspendu</option>
+      </select>
+    </div>
+
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Description
+      </label>
+      <textarea
+        value={formData.description}
+        onChange={(e) => setFormData({...formData, description: e.target.value})}
+        rows={3}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Conditions particulières
+      </label>
+      <textarea
+        value={formData.conditions_particulieres}
+        onChange={(e) => setFormData({...formData, conditions_particulieres: e.target.value})}
+        rows={3}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+  </div>
+);
+
+// Composant Formulaire Document
+const DocumentForm = ({ formData, setFormData, employes, contrats, selectedFiles, onFileChange }) => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Employé *
+        </label>
+        <select
+          value={formData.employe_id}
+          onChange={(e) => setFormData({...formData, employe_id: e.target.value})}
+          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+          required
+        >
+          <option value="">Sélectionner un employé</option>
+          {employes.map(employe => (
+            <option key={employe.id} value={employe.id}>
+              {employe.prenoms} {employe.nom_famille} - {employe.poste}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Contrat (optionnel)
+        </label>
+        <select
+          value={formData.contrat_id}
+          onChange={(e) => setFormData({...formData, contrat_id: e.target.value})}
+          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="">Sélectionner un contrat</option>
+          {contrats.map(contrat => (
+            <option key={contrat.id} value={contrat.id}>
+              {contrat.numero_contrat} - {contrat.employe?.prenoms} {contrat.employe?.nom_famille}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Type de document *
+        </label>
+        <select
+          value={formData.type_document}
+          onChange={(e) => setFormData({...formData, type_document: e.target.value})}
+          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+          required
+        >
+          <option value="Contrat">Contrat</option>
+          <option value="Avenant">Avenant</option>
+          <option value="Attestation_travail">Attestation de travail</option>
+          <option value="Bulletin_salaire">Bulletin de salaire</option>
+          <option value="Certificat_medical">Certificat médical</option>
+          <option value="Justificatif_absence">Justificatif d'absence</option>
+          <option value="Demande_conge">Demande de congé</option>
+          <option value="Evaluation_performance">Évaluation de performance</option>
+          <option value="Formation">Formation</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Confidentialité
+        </label>
+        <select
+          value={formData.confidentialite}
+          onChange={(e) => setFormData({...formData, confidentialite: e.target.value})}
+          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="Public">Public</option>
+          <option value="Interne">Interne</option>
+          <option value="Confidentiel">Confidentiel</option>
+          <option value="Secret">Secret</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date d'émission
+        </label>
+        <input
+          type="date"
+          value={formData.date_emission}
+          onChange={(e) => setFormData({...formData, date_emission: e.target.value})}
+          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date d'expiration
+        </label>
+        <input
+          type="date"
+          value={formData.date_expiration}
+          onChange={(e) => setFormData({...formData, date_expiration: e.target.value})}
+          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Description
+      </label>
+      <textarea
+        value={formData.description}
+        onChange={(e) => setFormData({...formData, description: e.target.value})}
+        rows={3}
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Fichier *
+      </label>
+      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500">
+        <div className="space-y-1 text-center">
+          <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <div className="flex text-sm text-gray-600 dark:text-gray-400">
+            <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+              <span>Télécharger un fichier</span>
+              <input
+                id="file-upload"
+                name="file-upload"
+                type="file"
+                className="sr-only"
+                onChange={onFileChange}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              />
+            </label>
+            <p className="pl-1">ou glisser-déposer</p>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG jusqu'à 10MB
+          </p>
+        </div>
+      </div>
+      {selectedFiles.length > 0 && (
+        <div className="mt-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Fichier sélectionné: {selectedFiles[0].name}
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 export default ContratsDocuments;

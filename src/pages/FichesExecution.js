@@ -653,10 +653,10 @@ const FichesExecution = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Fiches d'Exécution
+            Fiches d'intervention
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Gérer les fiches d'exécution des tâches avec leurs éléments d'intervention
+            Gérer les fiches d'interventions des tâches avec leurs éléments d'intervention
           </p>
         </div>
         <div className="flex items-center gap-3">

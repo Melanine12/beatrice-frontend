@@ -20,11 +20,11 @@ const MyPayments = () => {
     date_debut: '',
     date_fin: '',
     page: 1,
-    limit: 20
+    limit: 10
   });
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
+    limit: 10,
     total: 0,
     pages: 0
   });
@@ -152,10 +152,6 @@ const MyPayments = () => {
     setFilters(prev => ({ ...prev, page: newPage }));
   };
 
-  // Gérer le changement de limite
-  const handleLimitChange = (newLimit) => {
-    setFilters(prev => ({ ...prev, limit: newLimit, page: 1 }));
-  };
 
   // Réinitialiser les filtres
   const resetFilters = () => {
@@ -165,7 +161,7 @@ const MyPayments = () => {
       date_debut: '',
       date_fin: '',
       page: 1,
-      limit: 20
+      limit: 10
     });
   };
 
@@ -406,25 +402,20 @@ const MyPayments = () => {
                 </table>
               </div>
 
-              {/* Pagination */}
-              {pagination.pages > 1 && (
+              {/* Pagination - Toujours afficher si il y a des éléments */}
+              {pagination.total > 0 && (
                 <div className="mt-6 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-700 dark:text-gray-300">
-                      Affichage par page:
-                    </label>
-                    <select
-                      value={filters.limit}
-                      onChange={(e) => handleLimitChange(parseInt(e.target.value))}
-                      className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
-                    >
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    Affichage de <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span>
+                    {' '}à{' '}
+                    <span className="font-medium">
+                      {Math.min(pagination.page * pagination.limit, pagination.total)}
+                    </span>
+                    {' '}sur{' '}
+                    <span className="font-medium">{pagination.total}</span>
+                    {' '}paiement{pagination.total !== 1 ? 's' : ''}
                   </div>
-
+                  
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handlePageChange(pagination.page - 1)}

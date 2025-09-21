@@ -6,11 +6,13 @@ import Select from 'react-select';
 import { selectStyles } from '../components/Inventory/inventoryUtils';
 import { PencilSquareIcon, TrashIcon, CheckCircleIcon, XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const emptyLine = { inventaire_id: '', chambre_ids: [], quantite_demandee: 1 };
 
 const DemandesAffectation = () => {
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [demandes, setDemandes] = useState([]);
@@ -46,7 +48,17 @@ const DemandesAffectation = () => {
   const fetchDemandes = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/demandes-affectation');
+      
+      // Déterminer si l'utilisateur peut voir toutes les demandes
+      const canViewAll = user?.role === 'Superviseur Stock' || user?.role === 'Auditeur';
+      
+      let endpoint = '/demandes-affectation';
+      if (!canViewAll) {
+        // Pour les utilisateurs normaux, ajouter un paramètre pour filtrer par utilisateur
+        endpoint = `/demandes-affectation?user_id=${user?.id}`;
+      }
+      
+      const res = await api.get(endpoint);
       setDemandes(res.data.data || []);
     } catch (err) {
       console.error(err);
@@ -357,7 +369,9 @@ const DemandesAffectation = () => {
 
       <div className="card">
         <div className="card-body">
-          <h2 className="text-lg font-semibold mb-3">Mes demandes</h2>
+          <h2 className="text-lg font-semibold mb-3">
+            {(user?.role === 'Superviseur Stock' || user?.role === 'Auditeur') ? 'Toutes les demandes' : 'Mes demandes'}
+          </h2>
           {loading ? (
             <div className="py-8 flex justify-center"><LoadingSpinner /></div>
           ) : (
@@ -368,6 +382,9 @@ const DemandesAffectation = () => {
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Créée le</th>
+                    {(user?.role === 'Superviseur Stock' || user?.role === 'Auditeur') && (
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Demandeur</th>
+                    )}
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Articles</th>
                     <th className="px-4 py-2"></th>
                   </tr>
@@ -378,6 +395,11 @@ const DemandesAffectation = () => {
                       <td className="px-4 py-2 text-sm">{d.id}</td>
                       <td className="px-4 py-2 text-sm">{d.statut}</td>
                       <td className="px-4 py-2 text-sm">{new Date(d.created_at).toLocaleString('fr-FR')}</td>
+                      {(user?.role === 'Superviseur Stock' || user?.role === 'Auditeur') && (
+                        <td className="px-4 py-2 text-sm">
+                          {d.demandeur ? `${d.demandeur.prenom} ${d.demandeur.nom}` : 'N/A'}
+                        </td>
+                      )}
                       <td className="px-4 py-2 text-sm">
                         {(d.lignes || []).map(l => (
                           <div key={l.id} className="text-xs text-gray-700 dark:text-gray-300">
@@ -395,22 +417,26 @@ const DemandesAffectation = () => {
                             <EyeIcon className="h-5 w-5" />
                             <span className="sr-only">Détails</span>
                           </button>
-                          <button
-                            onClick={() => openDetails(d.id)}
-                            className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
-                            title="Mettre à jour la demande"
-                          >
-                            <PencilSquareIcon className="h-5 w-5" />
-                            <span className="sr-only">Mettre à jour</span>
-                          </button>
-                          <button
-                            onClick={() => deleteDemande(d.id)}
-                            className="inline-flex items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 py-1 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
-                            title="Supprimer la demande"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                            <span className="sr-only">Supprimer</span>
-                          </button>
+                          {d.statut !== 'approuvee' && (
+                            <button
+                              onClick={() => openDetails(d.id)}
+                              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                              title="Mettre à jour la demande"
+                            >
+                              <PencilSquareIcon className="h-5 w-5" />
+                              <span className="sr-only">Mettre à jour</span>
+                            </button>
+                          )}
+                          {d.statut !== 'approuvee' && (user?.role === 'Superviseur Stock' || user?.role === 'Auditeur') && (
+                            <button
+                              onClick={() => deleteDemande(d.id)}
+                              className="inline-flex items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 py-1 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
+                              title="Supprimer la demande"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                              <span className="sr-only">Supprimer</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

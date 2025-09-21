@@ -113,19 +113,359 @@ const CaisseTransactionsModal = ({ isOpen, onClose, caisse }) => {
     try {
       toast.loading('Génération du rapport PDF...');
       
-      const response = await api.get(`/caisses/${caisse.id}/transactions/pdf`, {
-        responseType: 'blob'
-      });
+      // Récupérer toutes les transactions pour le PDF
+      const response = await api.get(`/caisses/${caisse.id}/transactions?page=1&limit=1000`);
       
-      // Créer un lien de téléchargement
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `rapport_transactions_${caisse.nom}_${new Date().toISOString().split('T')[0]}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      if (!response.data.success) {
+        throw new Error('Erreur lors de la récupération des transactions');
+      }
+      
+      const allTransactions = response.data.transactions;
+      const summary = response.data.summary;
+      
+      // Créer une nouvelle fenêtre pour l'impression
+      const printWindow = window.open('', '_blank', 'width=1000,height=800');
+      
+      if (!printWindow) {
+        throw new Error('Impossible d\'ouvrir la fenêtre d\'impression');
+      }
+      
+      // Contenu HTML pour l'impression
+      const printContent = `
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>Rapport des Transactions - ${caisse.nom}</title>
+          <style>
+            @media print {
+              @page {
+                size: A4;
+                margin: 1.5cm;
+              }
+              body { margin: 0; }
+              .no-print { display: none !important; }
+            }
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              line-height: 1.6;
+              color: #1f2937;
+              margin: 0;
+              padding: 20px;
+              background: white;
+            }
+            .header {
+              background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+              color: white;
+              padding: 30px;
+              text-align: center;
+              border-radius: 12px 12px 0 0;
+              margin-bottom: 0;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: bold;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .header h2 {
+              margin: 10px 0 0 0;
+              font-size: 18px;
+              font-weight: normal;
+              opacity: 0.9;
+            }
+            .info-section {
+              background: #f8fafc;
+              padding: 20px;
+              border: 1px solid #e2e8f0;
+              border-top: none;
+            }
+            .info-section h3 {
+              margin: 0 0 15px 0;
+              color: #374151;
+              font-size: 16px;
+              font-weight: bold;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+            }
+            .summary-section {
+              background: white;
+              padding: 25px;
+              border: 1px solid #e2e8f0;
+              border-top: none;
+            }
+            .summary-section h3 {
+              margin: 0 0 20px 0;
+              color: #374151;
+              font-size: 18px;
+              font-weight: bold;
+            }
+            .summary-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
+            }
+            .summary-card {
+              border-radius: 12px;
+              padding: 20px;
+              text-align: center;
+              border: 2px solid;
+            }
+            .summary-card.blue {
+              background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+              border-color: #3b82f6;
+            }
+            .summary-card.green {
+              background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+              border-color: #22c55e;
+            }
+            .summary-card.red {
+              background: linear-gradient(135deg, #fef2f2, #fecaca);
+              border-color: #ef4444;
+            }
+            .summary-card.yellow {
+              background: linear-gradient(135deg, #fefce8, #fef3c7);
+              border-color: #f59e0b;
+            }
+            .summary-card .label {
+              font-size: 12px;
+              font-weight: bold;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+            }
+            .summary-card .value {
+              font-size: 18px;
+              font-weight: bold;
+              color: #1e293b;
+            }
+            .transactions-section {
+              background: white;
+              padding: 25px;
+              border: 1px solid #e2e8f0;
+              border-top: none;
+              border-radius: 0 0 12px 12px;
+            }
+            .transactions-section h3 {
+              margin: 0 0 20px 0;
+              color: #374151;
+              font-size: 18px;
+              font-weight: bold;
+            }
+            .transactions-table {
+              width: 100%;
+              border-collapse: collapse;
+              background: white;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .transactions-table thead tr {
+              background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+              color: white;
+            }
+            .transactions-table th,
+            .transactions-table td {
+              padding: 12px;
+              text-align: left;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .transactions-table th {
+              font-weight: bold;
+              font-size: 14px;
+            }
+            .transactions-table td {
+              font-size: 13px;
+            }
+            .transactions-table tbody tr:nth-child(even) {
+              background: #f8fafc;
+            }
+            .transactions-table tbody tr:nth-child(odd) {
+              background: white;
+            }
+            .amount-positive {
+              color: #059669;
+              font-weight: bold;
+            }
+            .amount-negative {
+              color: #dc2626;
+              font-weight: bold;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: 6px;
+              font-size: 11px;
+              font-weight: bold;
+            }
+            .status-valid {
+              background: #dcfce7;
+              color: #166534;
+            }
+            .status-pending {
+              background: #fef3c7;
+              color: #92400e;
+            }
+            .status-rejected {
+              background: #fef2f2;
+              color: #991b1b;
+            }
+            .footer {
+              margin-top: 30px;
+              padding: 20px;
+              background: #f8fafc;
+              border-radius: 8px;
+              border: 1px solid #e2e8f0;
+            }
+            .footer-content {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .print-button {
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: #3b82f6;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-size: 14px;
+              font-weight: bold;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .print-button:hover {
+              background: #2563eb;
+            }
+          </style>
+        </head>
+        <body>
+          <button class="print-button no-print" onclick="window.print()">
+            🖨️ Imprimer en PDF
+          </button>
+          
+          <div class="header">
+            <h1>📊 RAPPORT DES TRANSACTIONS</h1>
+            <h2>Caisse: ${caisse.nom}</h2>
+          </div>
+          
+          <div class="info-section">
+            <h3>📅 Informations du rapport</h3>
+            <div class="info-grid">
+              <div>
+                <p><strong>Généré le:</strong> ${new Date().toLocaleDateString('fr-FR', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</p>
+                <p><strong>Devise:</strong> ${caisse.devise}</p>
+              </div>
+              <div>
+                <p><strong>Total transactions:</strong> ${allTransactions.length}</p>
+                <p><strong>Utilisateur:</strong> ${caisse.nom}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="summary-section">
+            <h3>💰 RÉSUMÉ DU SOLDE</h3>
+            <div class="summary-grid">
+              <div class="summary-card blue">
+                <div class="label" style="color: #1e40af;">SOLDE INITIAL</div>
+                <div class="value">${formatCurrency(summary.soldeInitial, caisse.devise)}</div>
+              </div>
+              <div class="summary-card green">
+                <div class="label" style="color: #166534;">PAIEMENTS</div>
+                <div class="value">+${formatCurrency(summary.totalPaiements, caisse.devise)}</div>
+              </div>
+              <div class="summary-card red">
+                <div class="label" style="color: #991b1b;">DÉPENSES</div>
+                <div class="value">-${formatCurrency(summary.totalDepensesComplet, caisse.devise)}</div>
+              </div>
+              <div class="summary-card yellow">
+                <div class="label" style="color: #92400e;">SOLDE FINAL</div>
+                <div class="value">${formatCurrency(summary.soldeCalcule, caisse.devise)}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="transactions-section">
+            <h3>📋 DÉTAIL DES TRANSACTIONS</h3>
+            <table class="transactions-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Référence</th>
+                  <th>Type</th>
+                  <th style="text-align: right;">Montant</th>
+                  <th style="text-align: center;">Statut</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${allTransactions.map((transaction, index) => {
+                  const amount = parseFloat(transaction.montant || 0);
+                  const isPositive = amount > 0;
+                  const statusClass = transaction.statut === 'Validé' || transaction.statut === 'Payée' ? 'status-valid' : 
+                                   transaction.statut === 'En attente' ? 'status-pending' : 'status-rejected';
+                  return `
+                    <tr>
+                      <td>${new Date(transaction.date).toLocaleDateString('fr-FR')}</td>
+                      <td style="font-family: monospace;">${transaction.reference || '-'}</td>
+                      <td>${transaction.type_paiement || transaction.type || '-'}</td>
+                      <td style="text-align: right;" class="${isPositive ? 'amount-positive' : 'amount-negative'}">
+                        ${formatCurrency(transaction.montant, transaction.devise || caisse.devise)}
+                      </td>
+                      <td style="text-align: center;">
+                        <span class="status-badge ${statusClass}">
+                          ${transaction.statut || '-'}
+                        </span>
+                      </td>
+                      <td>${transaction.description || '-'}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="footer">
+            <div class="footer-content">
+              <div style="font-weight: bold;">
+                🏨 Hôtel Beatrice - Système de Gestion
+              </div>
+              <div style="text-align: center;">
+                Rapport généré le ${new Date().toLocaleString('fr-FR')}
+              </div>
+              <div>
+                Page 1 sur 1
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      // Attendre que le contenu soit chargé puis déclencher l'impression
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      };
       
       toast.dismiss();
       toast.success('Rapport PDF généré avec succès !');
