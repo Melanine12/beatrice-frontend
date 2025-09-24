@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import socketService from './services/socket';
 import Layout from './components/Layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -73,6 +74,12 @@ import {
   RHDashboard
 } from './pages/RH';
 
+// Job Portal Pages
+import JobPortalLanding from './pages/JobPortal/JobPortalLanding';
+import JobApplication from './pages/JobPortal/JobApplication';
+import ApplicationSuccess from './pages/JobPortal/ApplicationSuccess';
+import AllJobs from './pages/JobPortal/AllJobs';
+
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -83,6 +90,16 @@ function App() {
     }, 1000);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // Initialiser Socket.io au montage de l'application
+  useEffect(() => {
+    socketService.connect();
+    
+    // Nettoyer la connexion au démontage
+    return () => {
+      socketService.disconnect();
+    };
   }, []);
 
   if (isLoading) {
@@ -96,6 +113,13 @@ function App() {
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <Routes>
               <Route path="/login" element={<Login />} />
+              
+              {/* Job Portal Public Routes */}
+              <Route path="/job-portal" element={<JobPortalLanding />} />
+              <Route path="/job-portal/all-jobs" element={<AllJobs />} />
+              <Route path="/job-portal/apply/:id" element={<JobApplication />} />
+              <Route path="/job-portal/success" element={<ApplicationSuccess />} />
+              
               <Route path="/" element={
                 <ProtectedRoute>
                   <Layout />

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Backend Local</title>
+</head>
+<body>
+    <h1>Test Backend Local vs Render</h1>
+    <button onclick="testBoth()">Tester les deux serveurs</button>
+    <div id="results"></div>
+
+    <script>
+        async function testBoth() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>Résultats des tests :</h2>';
+            
+            const token = localStorage.getItem('token');
+            console.log('Token:', token ? 'Present' : 'Missing');
+            
+            const servers = [
+                { name: 'Render', url: 'https://beatrice-backend.onrender.com/api' },
+                { name: 'Local', url: 'http://localhost:5002/api' }
+            ];
+            
+            for (const server of servers) {
+                resultsDiv.innerHTML += `<h3>Test ${server.name}:</h3>`;
+                
+                const routes = ['/users', '/departements', '/contrats', '/documents-rh'];
+                
+                for (const route of routes) {
+                    try {
+                        const response = await fetch(`${server.url}${route}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        const result = `${route}: ${response.status} ${response.statusText}`;
+                        console.log(`${server.name} ${result}`);
+                        resultsDiv.innerHTML += `<p>${result}</p>`;
+                        
+                    } catch (error) {
+                        const result = `${route}: Erreur - ${error.message}`;
+                        console.error(`${server.name} ${result}`);
+                        resultsDiv.innerHTML += `<p style="color: red;">${result}</p>`;
+                    }
+                }
+                
+                resultsDiv.innerHTML += '<hr>';
+            }
+        }
+    </script>
+</body>
+</html>

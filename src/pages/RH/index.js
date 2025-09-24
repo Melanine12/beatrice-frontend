@@ -14,7 +14,7 @@ export { default as CommunicationRH } from './CommunicationRH';
 export { default as RHDashboard } from './RHDashboard';
 
 // Import ContratsDocuments, HistoriqueRH, OffresEmploi, Candidatures, ProcessusRecrutement, Integration, Pointage, Planning, HeuresSupplementaires, BulletinsPaie, AvantagesSociaux, Remboursements, Variables, Objectifs and Formations components
-export { default as ContratsDocuments } from './ContratsDocumentsDebug';
+export { default as ContratsDocuments } from './ContratsDocuments';
 export { default as HistoriqueRH } from './HistoriqueRH';
 export { default as OffresEmploi } from './OffresEmploi';
 export { default as Candidatures } from './Candidatures';

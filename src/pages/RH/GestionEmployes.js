@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DossierPersonnel, Organigramme, ContratsDocuments, HistoriqueRH } from './index';
+import OffresEmploi from './OffresEmploi';
 
 const GestionEmployes = () => {
   const [activeTab, setActiveTab] = useState('dossier-personnel');
@@ -8,6 +9,7 @@ const GestionEmployes = () => {
     { id: 'dossier-personnel', name: 'Dossier Personnel', component: DossierPersonnel },
     { id: 'organigramme', name: 'Organigramme', component: Organigramme },
     { id: 'contrats-documents', name: 'Contrats & Documents', component: ContratsDocuments },
+    { id: 'offres-emploi', name: 'Offres d\'Emploi', component: OffresEmploi },
     { id: 'historique', name: 'Historique RH', component: HistoriqueRH }
   ];
 

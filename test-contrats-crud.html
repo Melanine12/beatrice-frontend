@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test CRUD Contrats & Documents</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test CRUD Contrats & Documents RH</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Authentification</h2>
+        <button onclick="testAuth()">Tester l'authentification</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test CRUD Contrats</h2>
+        <button onclick="testContrats()">Lister les contrats</button>
+        <button onclick="createContrat()">Créer un contrat</button>
+        <div id="contrats-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test CRUD Documents</h2>
+        <button onclick="testDocuments()">Lister les documents</button>
+        <button onclick="createDocument()">Créer un document</button>
+        <div id="documents-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://beatrice-backend.onrender.com/api';
+        const token = localStorage.getItem('token');
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            try {
+                const response = await fetch(`${API_BASE}/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success">✅ Authentification réussie</div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erreur: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function testContrats() {
+            const resultDiv = document.getElementById('contrats-result');
+            try {
+                const response = await fetch(`${API_BASE}/contrats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Contrats récupérés (${data.contrats?.length || 0})</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erreur: ${response.status} - ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function testDocuments() {
+            const resultDiv = document.getElementById('documents-result');
+            try {
+                const response = await fetch(`${API_BASE}/documents-rh`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Documents récupérés (${data.documents?.length || 0})</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erreur: ${response.status} - ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function createContrat() {
+            const resultDiv = document.getElementById('contrats-result');
+            try {
+                const contratData = {
+                    employe_id: 1,
+                    type_contrat: 'CDI',
+                    numero_contrat: 'CTR-2025-001',
+                    date_debut: '2025-01-01',
+                    salaire_brut: 500000,
+                    poste_occupe: 'Développeur',
+                    statut: 'Actif',
+                    description: 'Contrat de test',
+                    cree_par: 22
+                };
+
+                const response = await fetch(`${API_BASE}/contrats`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(contratData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Contrat créé avec succès</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erreur: ${response.status} - ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function createDocument() {
+            const resultDiv = document.getElementById('documents-result');
+            try {
+                // Créer un fichier de test
+                const file = new File(['Test document content'], 'test-document.txt', { type: 'text/plain' });
+                const formData = new FormData();
+                formData.append('fichier', file);
+                formData.append('employe_id', '1');
+                formData.append('type_document', 'Contrat');
+                formData.append('nom_document', 'Document de test');
+                formData.append('description', 'Document de test créé via API');
+                formData.append('confidentialite', 'Interne');
+                formData.append('cree_par', '22');
+
+                const response = await fetch(`${API_BASE}/documents-rh`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Document créé avec succès</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erreur: ${response.status} - ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        // Test automatique au chargement
+        window.onload = function() {
+            console.log('Token:', token ? 'Present' : 'Missing');
+            if (!token) {
+                alert('Aucun token trouvé. Veuillez vous connecter d\'abord.');
+            }
+        };
+    </script>
+</body>
+</html>

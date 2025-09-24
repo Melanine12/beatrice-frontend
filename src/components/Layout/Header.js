@@ -7,6 +7,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import ResetDataModal from '../ResetDataModal';
+import NotificationBell from '../Notifications/NotificationBell';
 
 const Header = ({ user, setSidebarOpen }) => {
   const { logout } = useAuth();
@@ -51,7 +52,10 @@ const Header = ({ user, setSidebarOpen }) => {
             )}
           </button>
 
-          {/* Notifications */}
+          {/* Notifications - Offres d'emploi */}
+          <NotificationBell />
+
+          {/* Notifications - Système existant */}
           <button
             type="button"
             className="relative -m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200"
