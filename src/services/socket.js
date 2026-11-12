@@ -1,96 +1,88 @@
 import { io } from 'socket.io-client';
+import { SOCKET_URL } from '../config/api';
+import { getMemoryAccessToken } from './authTokenMemory';
+import { ensureSocketAuthToken } from './socketAuth';
 
-class SocketService {
-  constructor() {
-    this.socket = null;
-    this.isConnected = false;
+let socket = null;
+let connectingPromise = null;
+
+/**
+ * Cookie HttpOnly (withCredentials) + auth.token mémoire si cookies tiers bloqués.
+ * Sur synaptasys.com → API via /api (cookie OK) mais Socket vers Render = Bearer obligatoire.
+ */
+export const connectSocket = async () => {
+  if (socket && socket.connected) {
+    return socket;
   }
+  if (connectingPromise) return connectingPromise;
 
-  connect() {
-    if (this.socket && this.isConnected) {
-      return this.socket;
+  connectingPromise = (async () => {
+    await ensureSocketAuthToken();
+    console.log('🔌 Connexion Socket.io à:', SOCKET_URL);
+
+    if (socket) {
+      socket.auth = { token: getMemoryAccessToken() };
+      if (!socket.connected) socket.connect();
+      return socket;
     }
 
-    // Utiliser l'URL de l'API pour Socket.io
-    const backendUrl = process.env.REACT_APP_API_URL || 'https://beatrice-backend.onrender.com';
-    
-    this.socket = io(backendUrl, {
-      transports: ['polling', 'websocket'], // Commencer par polling
-      timeout: 20000,
-      forceNew: true,
-      autoConnect: true
+    socket = io(SOCKET_URL, {
+      withCredentials: true,
+      auth: (cb) => {
+        const token = getMemoryAccessToken();
+        cb(token ? { token } : {});
+      },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity
     });
 
-    this.socket.on('connect', () => {
-      console.log('✅ Socket.io connecté au serveur');
-      this.isConnected = true;
+    socket.on('connect', () => {
+      console.log('✅ Connected to chat server at:', SOCKET_URL);
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('❌ Socket.io déconnecté du serveur');
-      this.isConnected = false;
+    socket.on('disconnect', (reason) => {
+      console.log('❌ Disconnected from chat server. Reason:', reason);
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('❌ Erreur de connexion Socket.io:', error);
-      this.isConnected = false;
+    socket.on('connect_error', async (error) => {
+      console.error('❌ Socket connection error:', error?.message || error);
+      if (String(error?.message || '').toLowerCase().includes('auth')) {
+        await ensureSocketAuthToken();
+        if (socket && !socket.connected) {
+          socket.auth = { token: getMemoryAccessToken() };
+          socket.connect();
+        }
+      }
     });
 
-    return this.socket;
+    return socket;
+  })();
+
+  try {
+    return await connectingPromise;
+  } finally {
+    connectingPromise = null;
   }
+};
 
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-      this.isConnected = false;
-    }
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
   }
+};
 
-  getSocket() {
-    if (!this.socket || !this.isConnected) {
-      return this.connect();
-    }
-    return this.socket;
-  }
+export const getSocket = () => socket;
 
-  // Écouter les notifications
-  onNotification(callback) {
-    const socket = this.getSocket();
-    socket.on('notification', callback);
-  }
+export const getToken = () => getMemoryAccessToken();
 
-  // Arrêter d'écouter les notifications
-  offNotification(callback) {
-    if (this.socket) {
-      this.socket.off('notification', callback);
-    }
-  }
-
-  // Émettre un événement
-  emit(event, data) {
-    const socket = this.getSocket();
-    socket.emit(event, data);
-  }
-
-  // Écouter un événement
-  on(event, callback) {
-    const socket = this.getSocket();
-    socket.on(event, callback);
-  }
-
-  // Arrêter d'écouter un événement
-  off(event, callback) {
-    if (this.socket) {
-      this.socket.off(event, callback);
-    }
-  }
-}
-
-// Export d'une instance singleton
-const socketService = new SocketService();
-
-// Exposer Socket.io globalement pour les composants qui en ont besoin
-window.io = () => socketService.getSocket();
+const socketService = {
+  connect: () => connectSocket(),
+  disconnect: () => disconnectSocket(),
+  getSocket: () => getSocket()
+};
 
 export default socketService;
